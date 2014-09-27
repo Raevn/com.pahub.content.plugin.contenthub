@@ -1,0 +1,59 @@
+<div class='heading1'>INSTALLED LOCAL CONTENT</div>
+<div>
+	<div data-bind="css: {'selected-tab': model.content.local_content_filter_view()}, click: function(){ model.content.local_content_filter_view(true)}" class="tab">
+		<span class="tab-display-name">Filter</span> 
+	</div>
+	<div data-bind="css: {'selected-tab': !model.content.local_content_filter_view()}, click: function(){ model.content.local_content_filter_view(false)}" class="tab">
+		<span class="tab-display-name">Sort</span> 
+	</div>
+</div>
+<div class='content-filters-container'>
+	<!-- ko if: model.content.local_content_filter_view -->
+		<!-- ko foreach: content.local_content_filter_options --> 
+			<div class='content-filter-label' data-bind='text: label'></div>
+			<div class='content-filter-items-container'>
+				<div class='content-filter-item' data-bind="
+					css: {'content-filter-selected': pahub.api.content.getAppliedFilterValueIncluded(true, type, key, null) }, 
+					click: function() { 
+						pahub.api.content.applyFilter(true, type, key, null)
+				}">
+					<div class='content-filter-name'>All</div>
+					<div class='content-filter-results' data-bind="
+						visible: !pahub.api.content.getAppliedFilterValueIncluded(true, type, key, null), 
+						text: '(' + pahub.api.content.getApplyFilterResultCount(true, type, key, null) + ')'
+					"></div>
+				</div>
+				<!-- ko foreach: names --> 
+					<div class='content-filter-item' data-bind="
+						css: {'content-filter-selected': pahub.api.content.getAppliedFilterValueIncluded(true, $parent.type, $parent.key, $parent.values()[$index()]) }, 
+						click: function() { 
+							$parent.mode == 'toggle' ? pahub.api.content.toggleFilter(true, $parent.type, $parent.key, $parent.values()[$index()]) : pahub.api.content.applyFilter(true, $parent.type, $parent.key, [$parent.values()[$index()]])
+						}
+					">
+						<div class='content-filter-name' data-bind="text: $data"></div>
+						<div class='content-filter-results' data-bind="
+							visible: !pahub.api.content.getAppliedFilterValueIncluded(true, $parent.type, $parent.key, $parent.values()[$index()]), 
+							text: '(' + ($parent.mode == 'toggle' ? pahub.api.content.getToggleFilterResultCount(true, $parent.type, $parent.key, $parent.values()[$index()]) : pahub.api.content.getApplyFilterResultCount(true, $parent.type, $parent.key, [$parent.values()[$index()]])) + ')'
+						"></div>
+					</div>
+				<!-- /ko -->
+			</div>
+		<!-- /ko -->
+	<!-- /ko -->
+</div>
+<div data-bind="text: 'Showing ' + content.content_items.filtered_list(model.content.local_content_filters())().length + ' of ' + content.content_items().length + ' items.'"></div>
+<!-- ko foreach: content.content_items.filtered_list(model.content.local_content_filters()) --> 
+	<div class='content-item-cont' data-bind="css: {'content-disabled': !data.enabled()}">
+		<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
+		<div class='content-item' data-bind="click: function() { pahub.api.content.setContentEnabled($data, !$data.data.enabled())}">
+			<div class='content-type'>
+				<div class='content-type-inner' data-bind="style: {background: 'rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, text: $data.store.data.content_name"></div>
+			</div>
+			<div class='content-checkbox'>
+				<input type='checkbox' data-bind='checked: data.enabled, click: function() { pahub.api.content.setContentEnabled($data, $data.data.enabled()); return true}'></input><label></label>
+			</div>	
+			<div class='content-name' data-bind='text: data.display_name'></div>
+			<div class='content-description' data-bind='text: data.description'></div>
+		</div>
+	</div>
+<!-- /ko -->

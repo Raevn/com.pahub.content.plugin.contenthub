@@ -1,0 +1,15 @@
+<div class='heading1'>CONTENT AVAILABLE FOR DOWNLOAD</div>
+<div class='content-filters-container'>
+	<!-- ko foreach: content.online_content_filter_options --> 
+		<div class='content-filter-label' data-bind='text: label'></div>
+		<div class='content-filter-name' data-bind="css: {'content-filter-name-selected': pahub.api.content.getAppliedFilterValueIncluded(false, type, key, null) }, text: 'All', click: function() { pahub.api.content.toggleFilter(false, type, key, null)}"></div>
+		<div class='content-filter-divider'> | </div>
+		<!-- ko foreach: names --> 
+			<!-- ko if: $index() > 0 -->
+				<div class='content-filter-divider'> | </div>
+			<!-- /ko -->
+			<div class='content-filter-name' data-bind="css: {'content-filter-name-selected': pahub.api.content.getAppliedFilterValueIncluded(false, $parent.type, $parent.key, $parent.values()[$index()]) }, text: $data, click: function() { pahub.api.content.toggleFilter(false, $parent.type, $parent.key, $parent.values()[$index()])}"></div>
+		<!-- /ko -->
+		<br/>
+	<!-- /ko -->
+</div>

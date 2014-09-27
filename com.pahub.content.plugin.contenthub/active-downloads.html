@@ -1,0 +1,32 @@
+<div class='heading1' data-bind='text: model.current_loc_data()["ACTIVE_DOWNLOADS"] || "ACTIVE DOWNLOADS"'></div>
+<!-- ko foreach: resource_queue -->
+	<!-- ko ifnot: processed -->
+		<!-- ko ifnot: local -->
+			<div>
+				<div data-bind='text: name'></div>
+				<div data-bind='text: url'></div>
+				<div class='progress-container'>
+					<!-- ko if: lengthComputable() -->
+						<progress class='progress-bar' data-bind='attr:{value: percent}'></progress>
+						<div class='progress-text'><span data-bind='text: getFileSizeString(completed())'></span> / <span data-bind='text: getFileSizeString(size())'></span></div>
+					<!-- /ko -->
+					<!-- ko ifnot: lengthComputable() -->
+						<progress class='progress-bar'></progress>
+						<div class='progress-text'><span data-bind='text: getFileSizeString(completed())'></span> / Unknown</div>
+					<!-- /ko -->
+				</div>
+			</div>
+		<!-- /ko -->
+	<!-- /ko -->
+<!-- /ko -->
+<br/><div class='heading1' data-bind='text: (model.current_loc_data()["COMPLETED"] || "COMPLETED")'></div>
+<div data-bind='text: "Total Downloaded: " + getFileSizeString(pahub.api.resource.getTotalDownloaded())'></div>
+<!-- ko foreach: resource_queue -->
+	<!-- ko if: processed -->
+		<!-- ko ifnot: false -->
+			<div>
+				<div data-bind='text: name + " (" + getFileSizeString(completed()) + ")"'></div>
+			</div>
+		<!-- /ko -->
+	<!-- /ko -->
+<!-- /ko -->
