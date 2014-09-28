@@ -40,9 +40,43 @@
 			</div>
 		<!-- /ko -->
 	<!-- /ko -->
+	<!-- ko ifnot: model.content.local_content_filter_view -->
+		<div class='content-sort-label'>Direction</div>
+		<div class='content-sort-items-container'>
+			<div class='content-sort-item' data-bind="
+				css: {'content-sort-selected': pahub.api.content.getSortAscending(true)() == true }, 
+				click: function() { 
+					pahub.api.content.setSortAscending(true, true)
+				}
+			">
+				<div class='content-sort-name' data-bind="text: 'Ascending'"></div>
+			</div>
+			<div class='content-sort-item' data-bind="
+				css: {'content-sort-selected': pahub.api.content.getSortAscending(true)() == false }, 
+				click: function() { 
+					pahub.api.content.setSortAscending(true, false)
+				}
+			">
+				<div class='content-sort-name' data-bind="text: 'Descending'"></div>
+			</div>
+		</div>
+		<div class='content-sort-label'>Sort By</div>
+		<div class='content-sort-items-container'>
+			<!-- ko foreach: content.local_content_sort_methods -->
+				<div class='content-sort-item' data-bind="
+					css: {'content-sort-selected': pahub.api.content.getSort(true)() == name }, 
+					click: function() { 
+						pahub.api.content.applySort(true, name)
+					}
+				">
+					<div class='content-sort-name' data-bind="text: name"></div>
+				</div>
+			<!-- /ko -->
+		</div>
+	<!-- /ko -->
 </div>
-<div data-bind="text: 'Showing ' + content.content_items.filtered_list(model.content.local_content_filters())().length + ' of ' + content.content_items().length + ' items.'"></div>
-<!-- ko foreach: content.content_items.filtered_list(model.content.local_content_filters()) --> 
+<div data-bind="text: 'Showing ' + content.local_content_items.filtered_list(model.content.local_content_filters())().length + ' of ' + content.local_content_items().length + ' items.'"></div>
+<!-- ko foreach: content.local_content_items.filtered_list(model.content.local_content_filters()) --> 
 	<div class='content-item-cont' data-bind="css: {'content-disabled': !data.enabled()}">
 		<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
 		<div class='content-item' data-bind="click: function() { pahub.api.content.setContentEnabled($data, !$data.data.enabled())}">

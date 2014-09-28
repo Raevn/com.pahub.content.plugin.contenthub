@@ -126,24 +126,24 @@ img.content-image {
 }
 
 
-.content-filter-label {
+.content-filter-label,.content-sort-label {
     float: left;
 	width: 120px;
 	color: #888888;
 }
 
-.content-filter-items-container {
+.content-filter-items-container, .content-filter-sort-container {
 	padding-left: 120px;
 }
 
-.content-filter-item {
+.content-filter-item, .content-sort-item {
 	width: 100px;
 	display: inline-block;
 	font-size: 12px;
 	cursor: pointer;
 }
 
-.content-filter-name {
+.content-filter-name, .content-sort-name {
 	display: inline-block;
 }
 
@@ -152,11 +152,11 @@ img.content-image {
 	color: #515151;
 }
 
-.content-filter-selected {
+.content-filter-selected, .content-sort-selected {
 	color: #F9F9F9;
 }
 
-.content-filter-item:hover {
+.content-filter-item:hover, .content-sort-item:hover {
 	color: #F9F9F9;
 }
 
