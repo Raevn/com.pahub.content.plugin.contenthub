@@ -93,6 +93,7 @@ function load_plugin_content(data, folder) {
 	model["content"] = {
 		content_stores: ko.observableArray(),
 		content_items: ko.observableArray(),
+		online_content_items: ko.observableArray(),
 		
 		local_content_filters: ko.observableArray(),
 		local_content_filter_options: ko.observableArray(),
@@ -167,7 +168,7 @@ function load_plugin_content(data, folder) {
 		
 		//add filter method (AND, OR) for toggle mode
 		addFilterOption: function(local, label, type, key, mode, names, values) {
-			options_list = pahub.api.content.getFilterOptions(local);
+			var options_list = pahub.api.content.getFilterOptions(local);
 			//check for existing, and replace
 			options_list.push({
 				label: label,
@@ -192,8 +193,6 @@ function load_plugin_content(data, folder) {
 					return;
 				}
 			}
-
-		
 		},
 		
 		//makes this generic, eg "extract value into new array" function
@@ -527,21 +526,21 @@ function load_plugin_content(data, folder) {
 	pahub.api.content.addFilterOption(true, "Content Type", "match", "store_id", "set", model.content.content_store_names, model.content.content_store_ids);
 	pahub.api.content.addFilterOption(false, "Content Type", "match", "store_id", "set", model.content.content_store_names, model.content.content_store_ids);
 	
-	pahub.api.section.addSection("section-content", "CONTENT HUB", path.join(folder, "contenthub.png"));
-	pahub.api.tab.addTab("section-content", "active-downloads", "", "assets/img/test/download.png");
-	pahub.api.tab.addTab("section-content", "installed-content", "LOCAL CONTENT", "");
-	pahub.api.tab.addTab("section-content", "find-content", "FIND CONTENT", "");
-	pahub.api.tab.addTab("section-content", "upload-content", "UPLOAD CONTENT", "");
+	pahub.api.section.addSection("section-content", "CONTENT HUB", path.join(folder, "contenthub.png"), "sections", 20);
+	pahub.api.tab.addTab("section-content", "active-downloads", "", "assets/img/test/download.png", 10);
+	pahub.api.tab.addTab("section-content", "installed-content", "LOCAL CONTENT", "", 20);
+	pahub.api.tab.addTab("section-content", "find-content", "FIND CONTENT", "", 30);
+	pahub.api.tab.addTab("section-content", "upload-content", "UPLOAD CONTENT", "", 40);
 	
-	pahub.api.resource.loadResource(folder + "/active-downloads.html", "get", {name: "HTML: active-downloads", mode: "async", success: function(resource) {
+	pahub.api.resource.loadResource(path.join(folder, "active-downloads.html"), "get", {name: "HTML: active-downloads", mode: "async", success: function(resource) {
 		pahub.api.tab.setTabContent("section-content", "active-downloads", resource.data);
 	}});
 	
-	pahub.api.resource.loadResource(folder + "/installed-content.html", "get", {name: "HTML: installed-content", mode: "async", success: function(resource) {
+	pahub.api.resource.loadResource(path.join(folder, "installed-content.html"), "get", {name: "HTML: installed-content", mode: "async", success: function(resource) {
 		pahub.api.tab.setTabContent("section-content", "installed-content", resource.data);
 	}});
 	
-	pahub.api.resource.loadResource(folder + "/find-content.html", "get", {name: "HTML: find-content", mode: "async", success: function(resource) {
+	pahub.api.resource.loadResource(path.join(folder, "find-content.html"), "get", {name: "HTML: find-content", mode: "async", success: function(resource) {
 		pahub.api.tab.setTabContent("section-content", "find-content", resource.data);
 	}});
 }
