@@ -40,5 +40,51 @@
 			</div>
 		<!-- /ko -->
 	<!-- /ko -->
+	<!-- ko ifnot: model.content.online_content_filter_view -->
+		<div class='content-sort-label'>Direction</div>
+		<div class='content-sort-items-container'>
+			<div class='content-sort-item' data-bind="
+				css: {'content-sort-selected': pahub.api.content.getSortAscending(false)() == true }, 
+				click: function() { 
+					pahub.api.content.setSortAscending(false, true)
+				}
+			">
+				<div class='content-sort-name' data-bind="text: 'Ascending'"></div>
+			</div>
+			<div class='content-sort-item' data-bind="
+				css: {'content-sort-selected': pahub.api.content.getSortAscending(false)() == false }, 
+				click: function() { 
+					pahub.api.content.setSortAscending(false, false)
+				}
+			">
+				<div class='content-sort-name' data-bind="text: 'Descending'"></div>
+			</div>
+		</div>
+		<div class='content-sort-label'>Sort By</div>
+		<div class='content-sort-items-container'>
+			<!-- ko foreach: content.online_content_sort_methods -->
+				<div class='content-sort-item' data-bind="
+					css: {'content-sort-selected': pahub.api.content.getSort(false)() == name }, 
+					click: function() { 
+						pahub.api.content.applySort(false, name)
+					}
+				">
+					<div class='content-sort-name' data-bind="text: name"></div>
+				</div>
+			<!-- /ko -->
+		</div>
+	<!-- /ko -->
 </div>
 <div data-bind="text: 'Showing ' + content.online_content_items.filtered_list(model.content.online_content_filters())().length + ' of ' + content.online_content_items().length + ' items.'"></div>
+<!-- ko foreach: content.online_content_items.filtered_list(model.content.online_content_filters()) --> 
+	<div class='content-item-cont'>
+		<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
+		<div class='content-item' data-bind="click: function() { }">
+			<div class='content-type'>
+				<div class='content-type-inner' data-bind="style: {background: 'rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, text: $data.store.data.content_name"></div>
+			</div>
+			<div class='content-name' data-bind='text: data.display_name'></div>
+			<div class='content-description' data-bind='text: data.description'></div>
+		</div>
+	</div>
+<!-- /ko -->

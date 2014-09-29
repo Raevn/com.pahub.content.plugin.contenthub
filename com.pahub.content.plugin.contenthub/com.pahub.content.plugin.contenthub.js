@@ -3,7 +3,7 @@
 function load_plugin_content(data, folder) {
 	pahub.api["content"] = {
 		addContentStore: function(store_id, display_name, data) { model.content.addContentStore(store_id, data); },
-		addContentItem: function(store_id, content_id, display_name, local_path, data) { return model.content.addContentItem(store_id, content_id, display_name, local_path, data); },
+		addContentItem: function(store_id, content_id, display_name, local, local_path, data) { return model.content.addContentItem(store_id, content_id, display_name, local, local_path, data); },
 		setContentEnabled: function(content, enabled) { model.content.setContentEnabled(content, enabled); },
 		enableContent: function(content, enabled) { model.content.enableContent(content); },
 		disableContent: function(content, enabled) { model.content.disableContent(content); },
@@ -18,9 +18,9 @@ function load_plugin_content(data, folder) {
 		applySort: function(local, sort_method) { model.content.applySort(local, sort_method)},
 		toggleFilter: function(local, type, key, value) { model.content.toggleFilter(local, type, key, value)}, //merge with applyFilter
 		removeFilter: function(local, type, key) { model.content.removeFilter(local, type, key)},
-		refreshContentStore: function(store_id) { model.content.refreshContentStore(store_id);},
-		refreshContentStores: function() { model.content.refreshContentStores();},
-		refreshContentCatalog: function(store_id) { model.content.refreshContentCatalog(store_id);},
+		refreshLocalContent: function(store_id) { model.content.refreshLocalContent(store_id);},
+		refreshAllLocalContent: function() { model.content.refreshAllLocalContent();},
+		refreshOnlineContent: function(store_id) { model.content.refreshOnlineContent(store_id);},
 		getContentItems: function(local) { return model.content.getContentItems(local);},
 		getFilterList: function(local) { return model.content.getFilterList(local);},
 		getFilterOptions: function(local) { return model.content.getFilterOptions(local);},
@@ -384,7 +384,7 @@ function load_plugin_content(data, folder) {
 		},
 		
 		contentItemExists: function(store_id, content_id) {
-			return getMapItemIndex(model.content.content_stores()[getMapItemIndex(model.content.content_stores(), "store_id", store_id)].content_items(), "content_id", content_id) > -1;
+			return getMapItemIndex(model.content.content_stores()[getMapItemIndex(model.content.content_stores(), "store_id", store_id)].local_content_items(), "content_id", content_id) > -1;
 		},
 
 		writeContentItem: function (content_item) {
@@ -395,13 +395,14 @@ function load_plugin_content(data, folder) {
 
 		enableContent: function (content_item) {
 			content_item.data.enabled(true);
-			if (typeof window[model.content.getContentStore(content_item.store_id).data.content_enabled_func] == "function") {
-				window[model.content.getContentStore(content_item.store_id).data.content_enabled_func](content_item);
+			pahub.api.log.addLogMessage("info", content_item.store.data.content_name + " '" + content_item.content_id + "': enabled");
+			
+			if (typeof window[content_item.store.data.content_enabled_func] == "function") {
+				window[content_item.store.data.content_enabled_func](content_item);
 			}
-			var store = pahub.api.content.getContentStore(content_item.store_id);
-			if (store != false && store.data.hasOwnProperty("custom_write_content_func") == true) {
-				if (typeof window[store.data.custom_write_content_func] === 'function') {
-					window[store.data.custom_write_content_func](content_item);
+			if (content_item.store.data.hasOwnProperty("custom_write_content_func") == true) {
+				if (typeof window[content_item.store.data.custom_write_content_func] === 'function') {
+					window[content_item.store.data.custom_write_content_func](content_item);
 				}	
 			} else {
 				model.content.writeContentItem(content_item);
@@ -411,15 +412,14 @@ function load_plugin_content(data, folder) {
 		disableContent: function (content_item) {
 			if(model.isCorePlugin(content_item.content_id) == false) {
 				content_item.data.enabled(false);
+				pahub.api.log.addLogMessage("info", content_item.store.data.content_name + " '" + content_item.content_id + "': disabled");
 
-				if (typeof window[model.content.getContentStore(content_item.store_id).data.content_disabled_func] == "function") {
-					window[model.content.getContentStore(content_item.store_id).data.content_disabled_func](content_item);
+				if (typeof window[content_item.store.data.content_disabled_func] == "function") {
+					window[content_item.store.data.content_disabled_func](content_item);
 				}
-
-				var store = pahub.api.content.getContentStore(content_item.store_id);
-				if (store != false && store.data.hasOwnProperty("custom_write_content_func") == true) {
-					if (typeof window[store.data.custom_write_content_func] === 'function') {
-						window[store.data.custom_write_content_func](content_item);
+				if (content_item.store.data.hasOwnProperty("custom_write_content_func") == true) {
+					if (typeof window[content_item.store.data.custom_write_content_func] === 'function') {
+						window[content_item.store.data.custom_write_content_func](content_item);
 					}	
 				} else {
 					model.content.writeContentItem(content_item);
@@ -446,15 +446,15 @@ function load_plugin_content(data, folder) {
 
 		//store_id no longer needed
 		getContentItem: function(store_id, content_id) {
-			if (getMapItemIndex(model.content.getContentStore(store_id).content_items(), "content_id", content_id) > -1) {
+			if (getMapItemIndex(model.content.getContentStore(store_id).local_content_items(), "content_id", content_id) > -1) {
 			
-				return model.content.getContentStore(store_id).content_items()[getMapItemIndex(model.content.getContentStore(store_id).content_items(), "content_id", content_id)];
+				return model.content.getContentStore(store_id).local_content_items()[getMapItemIndex(model.content.getContentStore(store_id).local_content_items(), "content_id", content_id)];
 			} else {
 				return false;
 			}
 		},
 		
-		addContentItem: function (store_id, content_id, display_name, local_path, data) {
+		addContentItem: function (store_id, content_id, display_name, local, local_path, data) {
 			if (model.content.contentStoreExists(store_id) == true) {
 				if (model.content.contentItemExists(store_id, content_id) == false) {
 					var store = model.content.content_stores()[getMapItemIndex(model.content.content_stores(), "store_id", store_id)];
@@ -463,72 +463,120 @@ function load_plugin_content(data, folder) {
 						display_name: display_name,
 						store_id: store_id,
 						store: model.content.getContentStore(store_id),
-						local_path: local_path, //fixme
-						local_path_safe: local_path.replace(/\\/g,'\\\\').replace(/ /g,'\\ '),
 						icon: ko.observable("assets/img/content.png"),
 						data: data
 					}
+										
 					var icon_url = "";
-					
 					if (data.hasOwnProperty("icon") == false) {
-						if (fs.existsSync(path.join(local_path, "icon.png")) == true) {
-							item.icon(path.join(local_path, "icon.png"));
+						if (local == true) {
+							if (fs.existsSync(path.join(local_path, "icon.png")) == true) {
+								icon_url = path.join(local_path, "icon.png");
+							}
 						}
 					} else {
 						icon_url = data["icon"];
 					}
 					
 					if (icon_url != "" ) {
-						pahub.api.resource.loadResource(icon_url, "save", {name: "Icon: " + content_id, saveas: content_id + ".png", mode: "async", success: function(resource) {
+						if (fs.existsSync(path.join(constant.PAHUB_CACHE_DIR, content_id + ".png")) == true) {
 							item.icon(path.join(constant.PAHUB_CACHE_DIR, content_id + ".png"));
-						}});
+						} else {
+							pahub.api.resource.loadResource(icon_url, "save", {name: "Icon: " + content_id, saveas: content_id + ".png", mode: "async", success: function(resource) {
+								item.icon(path.join(constant.PAHUB_CACHE_DIR, content_id + ".png"));
+							}});
+						}
 					}
-										
-					item.data.enabled = ko.observable(data.enabled);
+						
+					if (local == true) {
+						item["local_path"] = local_path, //fixme
+						item["local_path_safe"] = local_path.replace(/\\/g,'\\\\').replace(/ /g,'\\ ')
+						item.data.enabled = ko.observable(data.enabled);
+						
+						model.content.local_content_items.push(item);
+						store.local_content_items.push(item);
+						pahub.api.content.applySort(true, model.content.local_content_sort());
+						return store.local_content_items()[store.local_content_items().length-1];
+					} else {
+						
+						if (data.hasOwnProperty("icon") == true) {
+							item.icon(data.icon);
+						}
 					
-					model.content.local_content_items.push(item);
-					store.content_items.push(item);
+						model.content.online_content_items.push(item);
+						store.online_content_items.push(item);
+						pahub.api.content.applySort(false, model.content.online_content_sort());
+						return store.online_content_items()[store.online_content_items().length-1];
+						
+					}
 					
-					pahub.api.content.applySort(true, model.content.local_content_sort());
 					
-					return store.content_items()[store.content_items().length-1];
+					
 				}
 			}
 		},
 		
-		refreshContentCatalog: function(store_id) {
-			pahub.api.log.addLogMessage("info", "Refreshing catalog for store '" + store_id + "'");
+		refreshAllOnlineContent: function() {
+			pahub.api.log.addLogMessage("info", "Refreshing all online content");
+			for (var i = 0; i < model.content.content_stores().length; i++) {
+				pahub.api.content.refreshOnlineContent(model.content.content_stores()[i].store_id);
+			}
+		},
+		
+		refreshOnlineContent: function(store_id) {
 			var store = pahub.api.content.getContentStore(store_id);
 			if (store != false) {
-				if (store.data.hasOwnProperty("catalog_path") == true) {
-					
+				if (store.data.hasOwnProperty("online_content_catalog") == true) {
+					pahub.api.resource.loadResource(store.data.online_content_catalog, "save", {
+						name: store.data.content_name + " catalog",
+						saveas: store_id + ".catalog.json",
+						success: function() {
+							pahub.api.log.addLogMessage("info", "Refreshing online content for store '" + store_id + "'");
+							var catalogJSON = readJSONfromFile(path.join(constant.PAHUB_CACHE_DIR, store_id + ".catalog.json"));
+							if (catalogJSON != false) {
+								if (store.data.hasOwnProperty("custom_online_content_refresh_func") == true) {
+									if (typeof window[store.data.custom_online_content_refresh_func] === 'function') {
+										window[store.data.custom_online_content_refresh_func](store_id, catalogJSON);
+									}
+								} else {
+									for (var i = 0; i < catalogJSON.length; i++) {
+										pahub.api.log.addLogMessage("verb", "Found online " + store.data.content_name + ": '" + catalogJSON[i].content_id + "'");
+									}
+									for (var i = 0; i < catalogJSON.length; i++) {
+										pahub.api.content.addContentItem(store_id, catalogJSON[i].content_id, catalogJSON[i].display_name, false, null, catalogJSON[i]);
+									}
+								}
+							}
+						}
+					});
 				}
 			}
 		},
 		
-		refreshContentStores: function() {
+		refreshAllLocalContent: function() {
 			pahub.api.log.addLogMessage("info", "Refreshing all local contents");
 			for (var i = 0; i < model.content.content_stores().length; i++) {
-				pahub.api.content.refreshContentStore(model.content.content_stores()[i].store_id);
+				pahub.api.content.refreshLocalContent(model.content.content_stores()[i].store_id);
 			}
 		},
 		
-		refreshContentStore: function(store_id) {
+		refreshLocalContent: function(store_id) {
 			//needs to clear the content store first!
-			pahub.api.log.addLogMessage("info", "Refreshing local content from store '" + store_id + "'");
+			pahub.api.log.addLogMessage("info", "Refreshing local content for store '" + store_id + "'");
 			var store = pahub.api.content.getContentStore(store_id);
 			
 			if (store != false) {
-				if (store.data.hasOwnProperty("custom_content_refresh_func") == true) {
-					if (typeof window[store.data.custom_content_refresh_func] === 'function') {
-						window[store.data.custom_content_refresh_func](store_id);
+				if (store.data.hasOwnProperty("custom_local_content_refresh_func") == true) {
+					if (typeof window[store.data.custom_local_content_refresh_func] === 'function') {
+						window[store.data.custom_local_content_refresh_func](store_id);
 					}				
 				} else {
 					if (store.data.hasOwnProperty("local_content_path") == true) {
 						var folders = getSubFolders(path.join(constant.PA_DATA_DIR, store.data.local_content_path));
 					
 						for (var i = 0; i < folders.length; i++) {
-							pahub.api.log.addLogMessage("info", "Found content: '" + folders[i] + "'");
+							//this is wrong. Need to check info json exists also.
+							pahub.api.log.addLogMessage("verb", "Found local " + store.data.content_name + ": '" + folders[i] + "'");
 						}
 						
 						for (var i = 0; i < folders.length; i++) {
@@ -537,7 +585,7 @@ function load_plugin_content(data, folder) {
 								
 								if (contentInfo.hasOwnProperty("store_id") == true) {
 									if (contentInfo.store_id == store_id) {
-										var content_item = pahub.api.content.addContentItem(store_id, contentInfo.content_id, contentInfo.display_name, path.join(constant.PA_DATA_DIR, store.data.local_content_path, folders[i]), contentInfo);
+										var content_item = pahub.api.content.addContentItem(store_id, contentInfo.content_id, contentInfo.display_name, true, path.join(constant.PA_DATA_DIR, store.data.local_content_path, folders[i]), contentInfo);
 										
 										if (content_item.data.enabled() == true) {
 											model.content.enableContent(content_item);
@@ -560,15 +608,15 @@ function load_plugin_content(data, folder) {
 			if (model.content.contentStoreExists(store_id) == false) {
 				var new_store = {
 					store_id: store_id,
-					content_items: ko.observableArray(),
-					catalogue_items: ko.observableArray(),
+					local_content_items: ko.observableArray(),
+					online_content_items: ko.observableArray(),
 					data: data
 				};
 				model.content.content_stores.push(new_store);
 				
 				//this should wait until PAHub has finished loading.
-				pahub.api.content.refreshContentStore(store_id);
-				pahub.api.content.refreshContentCatalog(store_id);
+				pahub.api.content.refreshLocalContent(store_id);
+				pahub.api.content.refreshOnlineContent(store_id);
 				
 				//find & load content
 				
@@ -598,8 +646,22 @@ function load_plugin_content(data, folder) {
 			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? 1 : -1);
 		}
 	});
+	pahub.api.content.addSortMethod(false, "Name", function(left, right) {
+		if (pahub.api.content.getSortAscending(false)() == true ) {
+			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? -1 : 1);
+		} else {
+			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? 1 : -1);
+		}
+	});
 	pahub.api.content.addSortMethod(true, "Author", function(left, right) {
 		if (pahub.api.content.getSortAscending(true)() == true ) {
+			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? -1 : 1);
+		} else {
+			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? 1 : -1);
+		}
+	});
+	pahub.api.content.addSortMethod(false, "Author", function(left, right) {
+		if (pahub.api.content.getSortAscending(false)() == true ) {
 			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? -1 : 1);
 		} else {
 			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? 1 : -1);
@@ -613,9 +675,18 @@ function load_plugin_content(data, folder) {
 		}
 	});
 	pahub.api.content.addSortMethod(true, "Content type", function(left, right) {
-		var left_store_name = pahub.api.content.getContentStore(left.data.store_id).data.display_name;
-		var right_store_name = pahub.api.content.getContentStore(right.data.store_id).data.display_name;
+		var left_store_name = left.store.data.content_name;
+		var right_store_name = right.store.data.content_name;
 		if (pahub.api.content.getSortAscending(true)() == true ) {
+			return left_store_name == right_store_name ? 0 : (left_store_name < right_store_name ? -1 : 1);
+		} else {
+			return left_store_name == right_store_name ? 0 : (left_store_name < right_store_name ? 1 : -1);
+		}
+	});
+	pahub.api.content.addSortMethod(false, "Content type", function(left, right) {
+		var left_store_name = left.store.data.content_name;
+		var right_store_name = right.store.data.content_name;
+		if (pahub.api.content.getSortAscending(false)() == true ) {
 			return left_store_name == right_store_name ? 0 : (left_store_name < right_store_name ? -1 : 1);
 		} else {
 			return left_store_name == right_store_name ? 0 : (left_store_name < right_store_name ? 1 : -1);

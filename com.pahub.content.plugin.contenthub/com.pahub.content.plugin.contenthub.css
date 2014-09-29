@@ -137,7 +137,7 @@ img.content-image {
 }
 
 .content-filter-item, .content-sort-item {
-	width: 100px;
+	width: 110px;
 	display: inline-block;
 	font-size: 12px;
 	cursor: pointer;
