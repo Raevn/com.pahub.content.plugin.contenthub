@@ -51,6 +51,11 @@ img.content-image {
 	padding-left: 5px;
 	font-style: italic;
 }
+
+.content-disabled .content-type-inner {
+	color: #888888;
+}
+
 .content-item-cont:hover .content-type-inner {
 	/* background-color: rgba(00,140,255,1); */
 }

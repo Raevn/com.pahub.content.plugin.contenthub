@@ -15,7 +15,7 @@
 				<div class='content-filter-item' data-bind="
 					css: {'content-filter-selected': pahub.api.content.getAppliedFilterValueIncluded(true, type, key, null) }, 
 					click: function() { 
-						pahub.api.content.applyFilter(true, type, key, null)
+						pahub.api.content.applyFilter(true, type, false, key, null)
 				}">
 					<div class='content-filter-name'>All</div>
 					<div class='content-filter-results' data-bind="
@@ -27,7 +27,7 @@
 					<div class='content-filter-item' data-bind="
 						css: {'content-filter-selected': pahub.api.content.getAppliedFilterValueIncluded(true, $parent.type, $parent.key, $parent.values()[$index()]) }, 
 						click: function() { 
-							$parent.mode == 'toggle' ? pahub.api.content.toggleFilter(true, $parent.type, $parent.key, $parent.values()[$index()]) : pahub.api.content.applyFilter(true, $parent.type, $parent.key, [$parent.values()[$index()]])
+							pahub.api.content.applyFilter(true, $parent.type, $parent.mode == 'toggle', $parent.key, $parent.mode == 'toggle' ? $parent.values()[$index()] : [$parent.values()[$index()]])
 						}
 					">
 						<div class='content-filter-name' data-bind="text: $data"></div>
