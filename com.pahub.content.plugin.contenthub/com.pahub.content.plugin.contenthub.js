@@ -8,6 +8,7 @@ function load_plugin_content(data, folder) {
 		//removeContentItem
 		contentItemExists: function(local, content_id) { return model.content.contentItemExists(local, content_id); },
 		//contentStoreExists
+		getContentItemDependents: function(local, content_id) { return model.content.getContentItemDependents(local, content_id); },
 		
 		setContentEnabled: function(content, enabled) { model.content.setContentEnabled(content, enabled); },
 		enableContent: function(content, enabled) { model.content.enableContent(content); },
@@ -362,6 +363,17 @@ function load_plugin_content(data, folder) {
 		},
 
 		enableContent: function (content_item) {
+			//enable all dependencies first (recursive)
+			if (content_item.data.hasOwnProperty("dependencies") == true) {
+				content_item.data.dependencies.forEach(function(item) {
+					if (pahub.api.content.contentItemExists(true, item) == true) {
+						var content = pahub.api.content.getContentItem(true, item);
+						if (content.data.enabled() == false) {
+							pahub.api.content.enableContent(content);
+						}
+					}
+				});
+			}
 			if (pahub.api.content.contentDependenciesEnabled(content_item.local, content_item.data["dependencies"]) == true) {
 				content_item.data.enabled(true);
 				pahub.api.log.addLogMessage("info", content_item.store.data.content_name + " '" + content_item.content_id + "': enabled");
@@ -385,6 +397,12 @@ function load_plugin_content(data, folder) {
 		disableContent: function (content_item) {
 			//TODO: disable dependent content
 			if(model.isCorePlugin(content_item.content_id) == false) {
+				var dependents = pahub.api.content.getContentItemDependents(true, content_item.content_id);
+				dependents.forEach(function(item) {
+					var content = pahub.api.content.getContentItem(true, item);
+					pahub.api.content.disableContent(content);
+				});
+			
 				content_item.data.enabled(false);
 				pahub.api.log.addLogMessage("info", content_item.store.data.content_name + " '" + content_item.content_id + "': disabled");
 
@@ -410,6 +428,22 @@ function load_plugin_content(data, folder) {
 			}
 		},
 		
+		getContentItemDependents: function(local, content_id) {
+			if (pahub.api.content.contentItemExists(local, content_id) == true) {
+				var dependents = []
+				var content = pahub.api.content.getContentItems(local);
+				content.forEach(function(item) {
+					if (item.data.hasOwnProperty("dependencies") == true) {
+						if (item.data.dependencies.indexOf(content_id) > -1) {
+							dependents.push(item.content_id);
+						}
+					}
+				});
+				return dependents;
+			}
+			return false;
+		},
+		
 		getContentStore: function(store_id) {
 			if (getMapItemIndex(model.content.content_stores(), "store_id", store_id) > -1) {
 				return model.content.content_stores()[getMapItemIndex(model.content.content_stores(), "store_id", store_id)];
@@ -428,7 +462,7 @@ function load_plugin_content(data, folder) {
 		
 		addContentItem: function (local, store_id, content_id, display_name, url, data) {
 			if (model.content.contentStoreExists(store_id) == true) {
-				if (model.content.contentItemExists(store_id, content_id) == false) {
+				if (model.content.contentItemExists(local, content_id) == false) {
 					var store = pahub.api.content.getContentStore(store_id)
 					var item = {
 						local: local,
