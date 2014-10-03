@@ -1,76 +1,79 @@
+.content-scroll-wrapper {
+	display: block;
+	position: relative;
+	top: 0px;
+	left: 0px;
+	height: calc(100% - 150px);
+	overflow-y: auto;
+}
+
+.content-filters-container {
+	display: block;
+	position: relative;
+	top: 0px;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	margin-right: 10px;
+	margin-bottom: 10px;
+	padding: 5px;
+	border: 1px solid #515151;
+	background-color: #1A1A1A;
+}
+
+.content-list {
+	display: block;
+	position: relative;
+}
+
+.content-detail {
+	display: block;
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	width: 100%;
+	height: 140px;
+	border: 1px solid #515151;
+	background-color: #1A1A1A;
+}
+
 .content-item-cont {
 	display: inline-block;
 	position: relative;
-	width: 200px;
-	height: 200px;
+	width: 140px;
+	height: 140px;
 	margin-right: 10px;
 	margin-bottom: 10px;
 	cursor: pointer;
-	border: 1px solid #888888;
+	background-color: #1A1A1A;
+}
+
+.content-disabled.content-item-cont {
+	background-color: #0B0B0B !important;
 }
 
 .content-item {
 	position: absolute;
-	width: 200px;
-	height: 200px;
+	width: 140px;
+	height: 140px;
 	z-index: 1;
 }
 
 img.content-image {
 	position: absolute;
-	width: 200px;
-	height: 200px;
+	width: 140px;
+	height: 140px;
 	z-index: 0;
 }
 
 .content-disabled  img.content-image {
 	-webkit-filter: grayscale(1);
-}
-
-.content-item-cont:hover img.content-image {
 	opacity: 0.45;
 }
 
 .content-item-cont:hover {
-	border: 1px solid #F9F9F9;
-}
-
-.content-type {
-    position: absolute;
-	width: 200px; /* 148 */
-    bottom: 0px; 
-	left: 0px;
-	height: 30px;
-}
-	
-.content-type-inner {
-	width: 195px; /* 113 */
-	height: 25px;
-	color: #F9F9F9;
-	padding-top: 5px;
-	padding-left: 5px;
-	font-style: italic;
-}
-
-.content-disabled .content-type-inner {
-	color: #888888;
-}
-
-.content-item-cont:hover .content-type-inner {
-	/* background-color: rgba(00,140,255,1); */
-}
-
-.content-type:before {
-    content: '';
-    position: absolute;
-    bottom: 0; 
-	right: 0;
-    /* border-bottom: 30px solid rgba(00,140,255,0.5); */
-    border-right: 30px solid rgba(0,0,0,0);
-    width: 0;
-}
-.content-item-cont:hover .content-type:before {
-	/* background-color: rgba(00,140,255,1); */
+	border: 2px solid #F9F9F9 !important;
+	background-color: #515151;
 }
 
 .content-checkbox {
@@ -85,7 +88,7 @@ img.content-image {
 	float: left;
 	clear: right;
 	box-sizing: border-box;
-	width: 200px;
+	width: 140px;
 	top: 0px;
 	left: 0px;
 	color: #F9F9F9;
@@ -96,40 +99,17 @@ img.content-image {
 	z-index: 1;
 }
 
+.content-update-available .content-name {
+	color: #CC8800 !important;
+}
+
 .content-disabled .content-name {
 	color: #888888;
 }
 
-.content-description {
-	display: none;
+.content-update-available.content-disabled .content-name {
+	color: #664400 !important;
 }
-
-.content-item-cont:hover  .content-description {
-	display: block;
-	float: left;
-	font-style: italic;
-	color: #F9F9F9;
-	padding: 5px;
-	width: 190px;
-	font-family: "Verdana";
-	font-size: 11px;
-	z-index: 1;
-}
-
-
-.content-filters-container {
-	border: 1px solid #515151;
-    display: block;
-	position: relative;
-	top: 0px;
-	bottom: 0px;
-	left: 0px;
-	right: 0px;
-	margin-right: 10px;
-	margin-bottom: 10px;
-	padding: 5px;
-}
-
 
 .content-filter-label,.content-sort-label {
     float: left;
@@ -167,4 +147,72 @@ img.content-image {
 
 .content-filter-item:hover .content-filter-results {
 	display: inline-block;
+}
+
+/* Move this to plugin store css */
+.content-detail-type {
+    position: absolute;
+	width: calc(100% - 140px);
+    bottom: 0px; 
+	left: 140px;
+	height: 30px;
+}
+	
+.content-detail-type-inner {
+	width: calc(100% - 5px);
+	height: 25px;
+	color: #F9F9F9;
+	padding-top: 5px;
+	padding-left: 5px;
+	font-family: "Verdana";
+	font-style: italic;
+}
+
+img.content-detail-image {
+	position: absolute;
+	width: 140px;
+	height: 140px;
+	left: 0px;
+	top: 0px;
+	/*background-color: #0B0B0B;*/
+}
+
+.content-disabled  img.content-detail-image {
+	-webkit-filter: grayscale(1);
+}
+
+.content-detail-item-cont:hover img.content-detail-image {
+	opacity: 0.45;
+}
+
+.content-detail-checkbox {
+    position: absolute;
+	top: 5px;
+	left: 145px;
+    height: 24px;
+    width: 24px;
+}
+
+.content-detail-name {
+	display: block;
+    position: absolute;
+	top: 0px;
+	left: 164px;
+	color: #F9F9F9;
+	font-size: 16px;
+	font-weight: bold;
+	padding: 5px;
+	text-shadow: 1px 1px 2px #000000;
+}
+
+.content-detail-description {
+	display: block;
+    position: absolute;
+	top: 24px;
+	left: 140px;
+	font-style: italic;
+	color: #F9F9F9;
+	padding: 5px;
+	font-family: "Verdana";
+	font-size: 11px;
 }

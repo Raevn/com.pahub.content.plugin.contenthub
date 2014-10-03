@@ -6,56 +6,46 @@ function load_plugin_content(data, folder) {
 		addContentItem: function(local, store_id, content_id, display_name, url, data) { return model.content.addContentItem(local, store_id, content_id, display_name, url, data); },
 		//removeContentStore
 		//removeContentItem
+
+		//install, update, delete etc.
 		
-		//contentStoreExists //this exists
+		contentStoreExists: function(store_id) { return model.content.contentStoreExists(store_id); },
 		contentItemExists: function(local, content_id) { return model.content.contentItemExists(local, content_id); },
 		
 		//getContentItemDependencies
 		getContentItemDependents: function(local, content_id) { return model.content.getContentItemDependents(local, content_id); },
-		contentDependenciesEnabled: function(local,dependencies) { return model.content.contentDependenciesEnabled(local,dependencies); },
+		contentDependenciesEnabled: function(local, dependencies) { return model.content.contentDependenciesEnabled(local, dependencies); },
+		contentDependentsDisabled: function(local, dependents) { return model.content.contentDependentsDisabled(local, dependents); },
 		
 		//getContentEnabled
 		setContentEnabled: function(content, enabled) { model.content.setContentEnabled(content, enabled); }, //change to content_id
 		enableContent: function(content, enabled) { model.content.enableContent(content); }, //change to content_id
 		disableContent: function(content, enabled) { model.content.disableContent(content); }, //change to content_id
 		
-		//getContentStores
+		getContentStores: function(local) { return model.content.getContentStores()();},
 		getContentStore: function(store_id) { return model.content.getContentStore(store_id); },
 		getContentItems: function(local) { return model.content.getContentItems(local)();},
 		getContentItem: function(local, content_id) { return model.content.getContentItem(local, content_id); },
-		
-
 		
 		addFilterOption: function(local, label, type, key, mode, names, values) { model.content.addFilterOption(local, label, type, key, mode, names, values); },
 		removeFilterOption: function(local, label, type, key) { model.content.removeFilterOption(local, label, type, key); },
 		applyFilter: function(local, type, toggle, key, value) { model.content.applyFilter(local, type, toggle, key, value)},
 		removeFilter: function(local, type, key, value) { model.content.removeFilter(local, type, key, value)},
-
 		getAppliedFilterValue: function(local, type, key) { return model.content.getAppliedFilterValue(local, type, key); },
 		getAppliedFilterValueIncluded: function(local, type, key, value) { return model.content.getAppliedFilterValueIncluded(local, type, key, value); },
-
-		getApplyFilterResultCount: function(local, type, key, value) { return model.content.getApplyFilterResultCount(local, type, key, value)},
-		getToggleFilterResultCount: function(local, type, key, value) { return model.content.getToggleFilterResultCount(local, type, key, value)}, //merge with getApplyFilterResultCount
-
+		getApplyFilterResultCount: function(local, type, toggle, key, value) { return model.content.getApplyFilterResultCount(local, type, toggle, key, value)},
 		
 		addSortMethod: function(local, name, sort_function) { model.content.addSortMethod(local, name, sort_function); },
 		//removeSortMethod
 		applySort: function(local, sort_method) { model.content.applySort(local, sort_method)},
-		//getSortAscending
+		getSort: function(local) { return model.content.getSort(local)();},
+		getSortAscending: function(local) { return model.content.getSortAscending(local)();},
 		setSortAscending: function(local, direction) { return model.content.setSortAscending(local, direction);},
 		
 		refreshAllLocalContent: function() { model.content.refreshAllLocalContent();},
 		refreshLocalContent: function(store_id) { model.content.refreshLocalContent(store_id);},
-		//refreshAllOnlineContent //exists
+		refreshAllOnlineContent: function() { model.content.refreshAllOnlineContent();},
 		refreshOnlineContent: function(store_id) { model.content.refreshOnlineContent(store_id);},
-		
-		//check these
-		getFilterList: function(local) { return model.content.getFilterList(local);}, //
-		getFilterOptions: function(local) { return model.content.getFilterOptions(local);}, //
-		getSort: function(local) { return model.content.getSort(local);}, //
-		getSortAscending: function(local) { return model.content.getSortAscending(local);}, //
-		getSortMethods: function(local) { return model.content.getSortMethods(local);} //
-		
 	}
 	
 	ko.observableArray.fn.filtered_list = function(filters) {
@@ -142,13 +132,16 @@ function load_plugin_content(data, folder) {
 		online_content_sort_asc: ko.observable(true),
 		online_content_sort_methods: ko.observableArray(),
 		
+		hover_local_content: ko.observable(),
+		hover_online_content: ko.observable(),
+		
 		addContentStore: function(store_id, data) {
 			if (model.content.contentStoreExists(store_id) == false) {
 				var new_store = {
-					store_id: store_id,
+					store_id: store_id, //ko.mapping
 					local_content_items: ko.observableArray(),
 					online_content_items: ko.observableArray(),
-					data: data
+					data: data //ko.mapping
 				};
 				model.content.content_stores.push(new_store);
 				
@@ -173,16 +166,16 @@ function load_plugin_content(data, folder) {
 				if (model.content.contentItemExists(local, content_id) == false) {
 					var store = pahub.api.content.getContentStore(store_id)
 					var item = {
-						local: local,
-						content_id: content_id,
-						display_name: display_name,
-						store_id: store_id,
-						store: model.content.getContentStore(store_id),
+						local: local, //ko.mapping
+						content_id: content_id, //ko.mapping
+						display_name: display_name, //ko.mapping
+						store_id: store_id, //ko.mapping
+						store: model.content.getContentStore(store_id), //ko.mapping
 						icon: ko.observable("assets/img/content.png"),
-						url: url,
-						online_content: null,
-						local_content: null,
-						data: data
+						url: url, //ko.mapping
+						online_content: ko.observable(),
+						local_content: ko.observable(),
+						data: data //ko.mapping
 					}
 					var icon_url = "";
 					if (data.hasOwnProperty("icon") == false) {
@@ -206,18 +199,18 @@ function load_plugin_content(data, folder) {
 					}
 						
 					if (local == true) {
-						item.local_content = item;
+						item.local_content(item);
 						item.data.enabled = ko.observable(data.enabled);
 						store.local_content_items.push(item);
 					} else {
-						item.online_content = item;
+						item.online_content(item);
 						if (data.hasOwnProperty("icon") == true) {
 							item.icon(data.icon);
 						}
 						store.online_content_items.push(item);
 					}
 					model.content.getContentItems(local).push(item);
-					pahub.api.content.applySort(local, pahub.api.content.getSort(local)());
+					pahub.api.content.applySort(local, pahub.api.content.getSort(local));
 
 					return item;
 				}
@@ -266,6 +259,26 @@ function load_plugin_content(data, folder) {
 				});
 			}
 			return allDependenciesEnabled;
+		},
+		
+		contentDependentsDisabled: function(local, dependents) {
+			//check content exists
+			var allDependentsDisabled = true;
+			if ($.isArray(dependents) == true) {
+				dependents.forEach(function(item) {
+					if (pahub.api.content.contentItemExists(local, item) == true) {
+						var content_item = pahub.api.content.getContentItem(local, item);
+						if (content_item.data.enabled() == true) {
+							//content is disabled
+							allDependentsDisabled = false;
+						}
+					} else {
+						//content isn't found - doesn't matter
+						//allDependentsDisabled = true;
+					}
+				});
+			}
+			return allDependentsDisabled;
 		},
 		
 		//change to content_id, enabled?
@@ -317,21 +330,29 @@ function load_plugin_content(data, folder) {
 					var content = pahub.api.content.getContentItem(true, item);
 					pahub.api.content.disableContent(content);
 				});
-			
-				content_item.data.enabled(false);
-				pahub.api.log.addLogMessage("info", content_item.store.data.content_name + " '" + content_item.content_id + "': disabled");
+				if (pahub.api.content.contentDependentsDisabled(true, dependents) == true) {
+					content_item.data.enabled(false);
+					pahub.api.log.addLogMessage("info", content_item.store.data.content_name + " '" + content_item.content_id + "': disabled");
 
-				if (typeof window[content_item.store.data.content_disabled_func] == "function") {
-					window[content_item.store.data.content_disabled_func](content_item);
-				}
-				if (content_item.store.data.hasOwnProperty("custom_write_content_func") == true) {
-					if (typeof window[content_item.store.data.custom_write_content_func] === 'function') {
-						window[content_item.store.data.custom_write_content_func](content_item);
-					}	
+					if (typeof window[content_item.store.data.content_disabled_func] == "function") {
+						window[content_item.store.data.content_disabled_func](content_item);
+					}
+					if (content_item.store.data.hasOwnProperty("custom_write_content_func") == true) {
+						if (typeof window[content_item.store.data.custom_write_content_func] === 'function') {
+							window[content_item.store.data.custom_write_content_func](content_item);
+						}	
+					} else {
+						model.content.writeContentItem(content_item);
+					}
 				} else {
-					model.content.writeContentItem(content_item);
+					var store = pahub.api.content.getContentStore(content_item.store_id);
+					pahub.api.log.addLogMessage("warn", "Cannot disable " + store.data.content_name + " '" + content_item.content_id + "': Dependent items are not disabled");
 				}
 			}
+		},
+		
+		getContentStores: function() {
+			return model.content.content_stores;
 		},
 		
 		getContentStore: function(store_id) {
@@ -360,7 +381,7 @@ function load_plugin_content(data, folder) {
 		
 		//add filter method (AND, OR) for toggle mode
 		addFilterOption: function(local, label, type, key, mode, names, values) {
-			var options_list = pahub.api.content.getFilterOptions(local);
+			var options_list = model.content.getFilterOptions(local);
 			//check for existing, and replace
 			options_list.push({
 				label: label,
@@ -376,7 +397,7 @@ function load_plugin_content(data, folder) {
 		},
 		
 		removeFilterOption: function(local, label, type, key) {
-			var options_list = pahub.api.content.getFilterOptions(local);
+			var options_list = model.content.getFilterOptions(local);
 			
 			for (var i = 0; i < options_list().length; i++) {
 				if (options_list()[i].key == key && options_list()[i].type == type && options_list()[i].label == label) {
@@ -388,7 +409,7 @@ function load_plugin_content(data, folder) {
 		},
 		
 		applyFilter: function(local, type, toggle, key, value) {
-			var filter_list = pahub.api.content.getFilterList(local);
+			var filter_list = model.content.getFilterList(local);
 			model.content.applyFilter_custom(filter_list, type, toggle, key, value)
 		},
 		
@@ -424,7 +445,7 @@ function load_plugin_content(data, folder) {
 		},
 		
 		removeFilter: function(local, type, key, value) {
-			var filter_list = pahub.api.content.getFilterList(local);
+			var filter_list = model.content.getFilterList(local);
 			for (var i = 0; i < filter_list().length; i++) {
 				if (filter_list()[i].key == key && filter_list()[i].type == type) {
 					if (filter_list()[i].value.indexOf(value) > -1) {
@@ -436,7 +457,7 @@ function load_plugin_content(data, folder) {
 		},
 		
 		getAppliedFilterValue: function(local, type, key) {
-			var filter_list = pahub.api.content.getFilterList(local);
+			var filter_list = model.content.getFilterList(local);
 			for (var i = 0; i < filter_list().length; i++) {
 				if (filter_list()[i].key == key && filter_list()[i].type == type) {
 					return filter_list()[i].value;
@@ -446,7 +467,7 @@ function load_plugin_content(data, folder) {
 		},
 		
 		getAppliedFilterValueIncluded: function(local, type, key, value) {
-			var filter_list = pahub.api.content.getFilterList(local);
+			var filter_list = model.content.getFilterList(local);
 			
 			var filter = pahub.api.content.getAppliedFilterValue(local, type, key);
 			
@@ -457,27 +478,18 @@ function load_plugin_content(data, folder) {
 			}
 		},
 		
-		getApplyFilterResultCount: function(local, type, key, value) {
-			var filter_list = pahub.api.content.getFilterList(local);
+		getApplyFilterResultCount: function(local, type, toggle, key, value) {
+			var filter_list = model.content.getFilterList(local);
 			var new_filter_list = ko.observableArray(JSON.parse(JSON.stringify(filter_list())));
 			
-			model.content.applyFilter_custom(new_filter_list, type, false, key, value);
-			
-			return model.content.getContentItems(local).filtered_list(new_filter_list())().length;
-		},
-		
-		getToggleFilterResultCount: function(local, type, key, value) {
-			var filter_list = pahub.api.content.getFilterList(local);
-			var new_filter_list = ko.observableArray(JSON.parse(JSON.stringify(filter_list())));
-			
-			model.content.applyFilter_custom(new_filter_list, type, true, key, value);
+			model.content.applyFilter_custom(new_filter_list, type, toggle, key, value);
 			
 			return model.content.getContentItems(local).filtered_list(new_filter_list())().length;
 		},
 		
 		addSortMethod: function(local, name, sort_function) {
-			var sort_methods = pahub.api.content.getSortMethods(local);
-			var sort = pahub.api.content.getSort(local);
+			var sort_methods = model.content.getSortMethods(local);
+			var sort = model.content.getSort(local);
 			sort_methods.push({
 				name: name,
 				method: sort_function
@@ -489,8 +501,8 @@ function load_plugin_content(data, folder) {
 		},
 		
 		applySort: function(local, sort_method) {
-			var sort_methods = pahub.api.content.getSortMethods(local);
-			var sort = pahub.api.content.getSort(local);
+			var sort_methods = model.content.getSortMethods(local);
+			var sort = model.content.getSort(local);
 			var content = model.content.getContentItems(local);
 			if (getMapItemIndex(sort_methods(), "name", sort_method) > -1) {
 				sort(sort_method);
@@ -498,10 +510,26 @@ function load_plugin_content(data, folder) {
 			}
 		},
 		
+		getSort: function(local) {
+			if (local == true) {
+				return model.content.local_content_sort;
+			} else {
+				return model.content.online_content_sort;
+			}
+		},
+		
+		getSortAscending: function(local) {
+			if (local == true) {
+				return model.content.local_content_sort_asc;
+			} else {
+				return model.content.online_content_sort_asc;
+			}
+		},
+		
 		setSortAscending: function(local, direction) {
-			var sort_ascending = pahub.api.content.getSortAscending(local);
+			var sort_ascending = model.content.getSortAscending(local);
 			sort_ascending(direction);
-			pahub.api.content.applySort(local, pahub.api.content.getSort(local)());
+			pahub.api.content.applySort(local, pahub.api.content.getSort(local));
 		},
 		
 		refreshAllLocalContent: function() {
@@ -665,8 +693,8 @@ function load_plugin_content(data, folder) {
 			store.local_content_items().forEach(function(item) {
 				if (model.content.contentItemExists(false, item.content_id) == true) {
 					var online_content = model.content.getContentItem(false, item.content_id);
-					item.online_content = online_content;
-					online_content.local_content = item;
+					item.online_content(online_content);
+					online_content.local_content(item);
 					if (item.data.version != online_content.data.version) {
 						pahub.api.log.addLogMessage("info", "New version of " + store.data.content_name + " '" + item.content_id + "', Local:" + item.data.version + ", Online: " + online_content.data.version);
 					}
@@ -706,20 +734,6 @@ function load_plugin_content(data, folder) {
 				return model.content.online_content_sort_methods;
 			}
 		},
-		getSort: function(local) {
-			if (local == true) {
-				return model.content.local_content_sort;
-			} else {
-				return model.content.online_content_sort;
-			}
-		},
-		getSortAscending: function(local) {
-			if (local == true) {
-				return model.content.local_content_sort_asc;
-			} else {
-				return model.content.online_content_sort_asc;
-			}
-		},
 		
 		//makes this generic, eg "extract value into new array" function
 		content_store_names: ko.computed({
@@ -754,35 +768,35 @@ function load_plugin_content(data, folder) {
 	pahub.api.content.addFilterOption(false, "Content Type", "match", "store_id", "set", model.content.content_store_names, model.content.content_store_ids);
 	
 	pahub.api.content.addSortMethod(true, "Name", function(left, right) {
-		if (pahub.api.content.getSortAscending(true)() == true ) {
+		if (pahub.api.content.getSortAscending(true) == true ) {
 			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? -1 : 1);
 		} else {
 			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? 1 : -1);
 		}
 	});
 	pahub.api.content.addSortMethod(false, "Name", function(left, right) {
-		if (pahub.api.content.getSortAscending(false)() == true ) {
+		if (pahub.api.content.getSortAscending(false) == true ) {
 			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? -1 : 1);
 		} else {
 			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? 1 : -1);
 		}
 	});
 	pahub.api.content.addSortMethod(true, "Author", function(left, right) {
-		if (pahub.api.content.getSortAscending(true)() == true ) {
+		if (pahub.api.content.getSortAscending(true) == true ) {
 			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? -1 : 1);
 		} else {
 			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? 1 : -1);
 		}
 	});
 	pahub.api.content.addSortMethod(false, "Author", function(left, right) {
-		if (pahub.api.content.getSortAscending(false)() == true ) {
+		if (pahub.api.content.getSortAscending(false) == true ) {
 			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? -1 : 1);
 		} else {
 			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? 1 : -1);
 		}
 	});
 	pahub.api.content.addSortMethod(true, "Last Updated", function(left, right) {
-		if (pahub.api.content.getSortAscending(true)() == true ) {
+		if (pahub.api.content.getSortAscending(true) == true ) {
 			return left.data.date == right.data.date ? 0 : (left.data.date < right.data.date ? -1 : 1);
 		} else {
 			return left.data.date == right.data.date ? 0 : (left.data.date < right.data.date ? 1 : -1);
@@ -791,7 +805,7 @@ function load_plugin_content(data, folder) {
 	pahub.api.content.addSortMethod(true, "Content type", function(left, right) {
 		var left_store_name = left.store.data.content_name;
 		var right_store_name = right.store.data.content_name;
-		if (pahub.api.content.getSortAscending(true)() == true ) {
+		if (pahub.api.content.getSortAscending(true) == true ) {
 			return left_store_name == right_store_name ? 0 : (left_store_name < right_store_name ? -1 : 1);
 		} else {
 			return left_store_name == right_store_name ? 0 : (left_store_name < right_store_name ? 1 : -1);
@@ -800,7 +814,7 @@ function load_plugin_content(data, folder) {
 	pahub.api.content.addSortMethod(false, "Content type", function(left, right) {
 		var left_store_name = left.store.data.content_name;
 		var right_store_name = right.store.data.content_name;
-		if (pahub.api.content.getSortAscending(false)() == true ) {
+		if (pahub.api.content.getSortAscending(false) == true ) {
 			return left_store_name == right_store_name ? 0 : (left_store_name < right_store_name ? -1 : 1);
 		} else {
 			return left_store_name == right_store_name ? 0 : (left_store_name < right_store_name ? 1 : -1);
