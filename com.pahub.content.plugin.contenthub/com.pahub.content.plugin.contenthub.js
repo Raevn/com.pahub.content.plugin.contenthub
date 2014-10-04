@@ -1,12 +1,17 @@
 /** CORE-CONTENT **/
 
+//TODO: Bug with content filter counts not updating when selecting additional features
+//      Related to ko.deferred?
+
 function load_plugin_content(data, folder) {
 	pahub.api["content"] = {
 		addContentStore: function(store_id, display_name, data) { model.content.addContentStore(store_id, data); },
 		addContentItem: function(local, store_id, content_id, display_name, url, data) { return model.content.addContentItem(local, store_id, content_id, display_name, url, data); },
 		//removeContentStore
-		//removeContentItem
+		removeContentItem:  function(local, content_id) { model.content.removeContentItem(local, content_id); },
 
+		installContentItem: function(content_id) { model.content.installContentItem(content_id); },
+		
 		//install, update, delete etc.
 		
 		contentStoreExists: function(store_id) { return model.content.contentStoreExists(store_id); },
@@ -120,6 +125,7 @@ function load_plugin_content(data, folder) {
 		
 		local_content_filters: ko.observableArray(),
 		local_content_filter_options: ko.observableArray(),
+		local_content_filter_tab: ko.observable("filter"),
 		local_content_filter_view: ko.observable(true),
 		local_content_sort: ko.observable(""),
 		local_content_sort_asc: ko.observable(true),
@@ -127,6 +133,7 @@ function load_plugin_content(data, folder) {
 		
 		online_content_filters: ko.observableArray(),
 		online_content_filter_options: ko.observableArray(),
+		online_content_filter_tab: ko.observable("filter"),
 		online_content_filter_view: ko.observable(true),
 		online_content_sort: ko.observable(""),
 		online_content_sort_asc: ko.observable(true),
@@ -189,30 +196,102 @@ function load_plugin_content(data, folder) {
 					}
 					
 					if (icon_url != "" ) {
-						if (fs.existsSync(path.join(constant.PAHUB_CACHE_DIR, content_id + ".png")) == true) {
-							item.icon(path.join(constant.PAHUB_CACHE_DIR, content_id + ".png"));
+						if (fs.existsSync(path.join(constant.PAHUB_CACHE_DIR, "icons", content_id + ".png")) == true) {
+							item.icon(path.join(constant.PAHUB_CACHE_DIR, "icons", content_id + ".png"));
 						} else {
-							pahub.api.resource.loadResource(icon_url, "save", {name: "Icon: " + content_id, saveas: content_id + ".png", mode: "async", success: function(resource) {
-								item.icon(path.join(constant.PAHUB_CACHE_DIR, content_id + ".png"));
+							pahub.api.resource.loadResource(icon_url, "save", {name: "Icon: " + content_id, saveas: "icons/" + content_id + ".png", mode: "async", success: function(resource) {
+								item.icon(path.join(constant.PAHUB_CACHE_DIR, 'icons', content_id + ".png"));
 							}});
 						}
 					}
-						
+					
 					if (local == true) {
 						item.local_content(item);
 						item.data.enabled = ko.observable(data.enabled);
 						store.local_content_items.push(item);
+						
+						if (model.content.contentItemExists(false, item.content_id) == true) {
+							var online_content = model.content.getContentItem(false, item.content_id);
+							item.online_content(online_content);
+							online_content.local_content(item);
+							if (item.data.version != online_content.data.version) {
+								pahub.api.log.addLogMessage("info", "New version of " + store.data.content_name + " '" + item.content_id + "', Local:" + item.data.version + ", Online: " + online_content.data.version);
+							}
+						}
 					} else {
 						item.online_content(item);
-						if (data.hasOwnProperty("icon") == true) {
-							item.icon(data.icon);
-						}
 						store.online_content_items.push(item);
+						
+						if (model.content.contentItemExists(true, item.content_id) == true) {
+							var local_content = model.content.getContentItem(true, item.content_id);
+							item.local_content(local_content);
+							local_content.online_content(item);
+							if (item.data.version != local_content.data.version) {
+								pahub.api.log.addLogMessage("info", "New version of " + store.data.content_name + " '" + item.content_id + "', Local:" + local_content.data.version + ", Online: " + item.data.version);
+							}
+						}
 					}
+					
 					model.content.getContentItems(local).push(item);
 					pahub.api.content.applySort(local, pahub.api.content.getSort(local));
 
 					return item;
+				}
+			}
+		},
+		
+		removeContentItem: function(local, content_id) {
+			pahub.api.log.addLogMessage("info", "Removing '" + content_id + "'");
+			if (pahub.api.content.contentItemExists(local, content_id) == true) {
+				var content = pahub.api.content.getContentItem(local, content_id);
+				if(model.isCorePlugin(content.content_id) == false) {
+					if (local == true) {
+						pahub.api.content.disableContent(content);
+					}
+					var content_items = model.content.getContentItems(local);
+					
+					//remove reference from opposite content
+					if (pahub.api.content.contentItemExists(!local, content_id) == true) {
+						var other_content = pahub.api.content.getContentItem(!local, content_id);
+						if (local == true) {
+							other_content.online_content(null);
+						} else {
+							other_content.local_content(null);
+						}
+					}
+					
+					//remove from store
+					
+					if (local == true) {
+						content.store.local_content_items.splice(content_items().indexOf(content),1);
+					} else {
+						content.store.online_content_items.splice(content_items().indexOf(content),1);
+					}
+					
+					//remove from content list
+					content_items.splice(content_items().indexOf(content),1);
+				}
+			}
+		},
+		
+		installContentItem: function(content_id) {
+			if (pahub.api.content.contentItemExists(false, content_id) == true) {
+				var content = pahub.api.content.getContentItem(false, content_id);
+				if (content.data.hasOwnProperty("url") == true) {
+					pahub.api.resource.loadResource(content.data.url, "save", {
+						name: content.display_name,
+						saveas: content.content_id + ".zip",
+						success: function(item) {
+							//This is default functionality.
+							//Need to add custom override, & work out what value for subfolder (null)
+							pahub.api.content.removeContentItem(true, content.content_id);
+							extractZip(path.join(constant.PAHUB_CACHE_DIR, content.content_id + ".zip"), content.content_id, path.join(constant.PA_DATA_DIR, content.store.data.local_content_path), 
+								getZippedFilePath(path.join(constant.PAHUB_CACHE_DIR, content.content_id + ".zip"), "modinfo.json")
+							);
+							pahub.api.content.refreshLocalContent(content.store_id);
+							//switch to local content tab?
+						}
+					});
 				}
 			}
 		},
@@ -309,6 +388,8 @@ function load_plugin_content(data, folder) {
 				if (typeof window[content_item.store.data.content_enabled_func] == "function") {
 					window[content_item.store.data.content_enabled_func](content_item);
 				}
+				
+				//move this check into writeContentItem;
 				if (content_item.store.data.hasOwnProperty("custom_write_content_func") == true) {
 					if (typeof window[content_item.store.data.custom_write_content_func] === 'function') {
 						window[content_item.store.data.custom_write_content_func](content_item);
@@ -323,7 +404,6 @@ function load_plugin_content(data, folder) {
 		},
 		
 		disableContent: function (content_item) {
-			//TODO: disable dependent content
 			if(model.isCorePlugin(content_item.content_id) == false) {
 				var dependents = pahub.api.content.getContentItemDependents(true, content_item.content_id);
 				dependents.forEach(function(item) {
@@ -337,6 +417,8 @@ function load_plugin_content(data, folder) {
 					if (typeof window[content_item.store.data.content_disabled_func] == "function") {
 						window[content_item.store.data.content_disabled_func](content_item);
 					}
+					
+					//move this check into writeContentItem;
 					if (content_item.store.data.hasOwnProperty("custom_write_content_func") == true) {
 						if (typeof window[content_item.store.data.custom_write_content_func] === 'function') {
 							window[content_item.store.data.custom_write_content_func](content_item);
@@ -558,7 +640,6 @@ function load_plugin_content(data, folder) {
 						setTimeout(function(){
 							content_queue = window[store.data.find_local_content_func](store_id);
 							model.content.loadLocalContent(store_id, content_queue);
-							model.content.compareContent(store_id); //change to api
 						}, 1);
 					} else {
 						//error
@@ -567,7 +648,6 @@ function load_plugin_content(data, folder) {
 					setTimeout(function(){
 						content_queue = model.content.findLocalContent(store_id);
 						model.content.loadLocalContent(store_id, content_queue);
-						model.content.compareContent(store_id); //change to api
 					}, 1);
 				}
 			}
@@ -603,7 +683,21 @@ function load_plugin_content(data, folder) {
 			
 			//load Content
 			if ($.isArray(content_queue) == true) {
-				pahub.api.log.addLogMessage("info", "Found " + content_queue.length + " content items for store '" + store_id + "'");
+				var new_queue = [];
+				
+				content_queue.forEach(function(item) {
+					if (pahub.api.content.contentItemExists(true, item.content_id) == true) {
+						var content = pahub.api.content.getContentItem(true, item.content_id);
+						if (content.version != item.version) {
+							new_queue.push(item);
+						}						
+					} else {
+						new_queue.push(item);
+					}
+				});
+				content_queue = new_queue;
+				
+				pahub.api.log.addLogMessage("info", "Found " + content_queue.length + " new content items for store '" + store_id + "'");
 				
 				content_queue.forEach(function(item) {
 					pahub.api.log.addLogMessage("verb", "Found local " + store.data.content_name + ": '" + item.content_id + "'");
@@ -619,7 +713,7 @@ function load_plugin_content(data, folder) {
 						//Check dependencies
 						if (pahub.api.content.contentDependenciesEnabled(true, contentInfo.data["dependencies"]) == true) {
 							var content_item = pahub.api.content.addContentItem(true, contentInfo.store_id, contentInfo.content_id, contentInfo.data.display_name, contentInfo.url, contentInfo.data);
-							
+
 							if (content_item.data.enabled() == true) {
 								model.content.enableContent(content_item);
 							}
@@ -642,7 +736,8 @@ function load_plugin_content(data, folder) {
 					var item_store = pahub.api.content.getContentStore(item.store_id);
 					pahub.api.log.addLogMessage("warn", "Cannot enable " + item_store.data.content_name + ": '" + item.content_id + "': Required dependency not met");
 					item.data.enabled = false;
-					pahub.api.content.addContentItem(true, item.store_id, item.content_id, item.data.display_name, item.url, item.data);
+					var content = pahub.api.content.addContentItem(true, item.store_id, item.content_id, item.data.display_name, item.url, item.data);
+					pahub.api.content.disableContent(content);
 				});
 			}
 		},
@@ -669,7 +764,6 @@ function load_plugin_content(data, folder) {
 									if (store.data.hasOwnProperty("find_online_content_func") == true) {
 										if (typeof window[store.data.find_online_content_func] === 'function') {
 											window[store.data.find_online_content_func](store_id, catalogJSON);
-											model.content.compareContent(store_id); //change to api // temp
 										}
 									} else {
 										for (var i = 0; i < catalogJSON.length; i++) {
@@ -679,27 +773,12 @@ function load_plugin_content(data, folder) {
 											pahub.api.content.addContentItem(false, store_id, catalogJSON[i].content_id, catalogJSON[i].display_name, null, catalogJSON[i]);
 										}
 									}
-									model.content.compareContent(store_id); //change to api
 								}, 1);
 							}
 						}
 					});
 				}
 			}
-		},
-		
-		compareContent: function(store_id) {
-			var store = pahub.api.content.getContentStore(store_id);
-			store.local_content_items().forEach(function(item) {
-				if (model.content.contentItemExists(false, item.content_id) == true) {
-					var online_content = model.content.getContentItem(false, item.content_id);
-					item.online_content(online_content);
-					online_content.local_content(item);
-					if (item.data.version != online_content.data.version) {
-						pahub.api.log.addLogMessage("info", "New version of " + store.data.content_name + " '" + item.content_id + "', Local:" + item.data.version + ", Online: " + online_content.data.version);
-					}
-				}
-			});
 		},
 		
 		writeContentItem: function (content_item) {

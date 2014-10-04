@@ -1,86 +1,94 @@
 <div class="content-scroll-wrapper">
 	<div class='heading1'>CONTENT AVAILABLE FOR DOWNLOAD</div>
-	<div>
-		<div data-bind="css: {'selected-tab': model.content.online_content_filter_view()}, click: function(){ model.content.online_content_filter_view(true)}" class="tab">
+	<div class='sub-tab-container'>
+		<div data-bind="css: {'selected-tab': model.content.online_content_filter_tab() == 'filter'}, click: function(){ model.content.online_content_filter_tab('filter'); model.content.online_content_filter_view(true)}" class="tab">
 			<span class="tab-display-name">Filter</span> 
 		</div>
-		<div data-bind="css: {'selected-tab': !model.content.online_content_filter_view()}, click: function(){ model.content.online_content_filter_view(false)}" class="tab">
+		<div data-bind="css: {'selected-tab': model.content.online_content_filter_tab() == 'sort'}, click: function(){ model.content.online_content_filter_tab('sort'); model.content.online_content_filter_view(true)}" class="tab">
 			<span class="tab-display-name">Sort</span> 
 		</div>
+		<div data-bind="css: {'selected-tab': model.content.online_content_filter_tab() == 'display'}, click: function(){ model.content.online_content_filter_tab('display'); model.content.online_content_filter_view(true)}" class="tab">
+			<span class="tab-display-name">Display</span> 
+		</div>
+		<div class="far-right-tab-list">
+			<div class='text-button' data-bind="text: model.content.online_content_filter_view() ? 'Hide Options' : 'Show Options', click: function() { model.content.online_content_filter_view(!model.content.online_content_filter_view()); }">Show</div> 
+		</div>
 	</div>
-	<div class='content-filters-container'>
-		<!-- ko if: model.content.online_content_filter_view -->
-			<!-- ko foreach: content.online_content_filter_options --> 
-				<div class='content-filter-label' data-bind='text: label'></div>
-				<div class='content-filter-items-container'>
-					<div class='content-filter-item' data-bind="
-						css: {'content-filter-selected': pahub.api.content.getAppliedFilterValueIncluded(false, type, key, null) }, 
-						click: function() { 
-							pahub.api.content.applyFilter(false, type, false, key, null)
-					}">
-						<div class='content-filter-name'>All</div>
-						<div class='content-filter-results' data-bind="
-							visible: !pahub.api.content.getAppliedFilterValueIncluded(false, type, key, null), 
-							text: '(' + pahub.api.content.getApplyFilterResultCount(false, type, false, key, null) + ')'
-						"></div>
-					</div>
-					<!-- ko foreach: names --> 
+	<!-- ko if: model.content.online_content_filter_view -->
+		<div class='content-filters-container'>
+			<!-- ko if: model.content.online_content_filter_tab() == "filter" -->
+				<!-- ko foreach: content.online_content_filter_options --> 
+					<div class='content-filter-label' data-bind='text: label'></div>
+					<div class='content-filter-items-container'>
 						<div class='content-filter-item' data-bind="
-							css: {'content-filter-selected': pahub.api.content.getAppliedFilterValueIncluded(false, $parent.type, $parent.key, $parent.values()[$index()]) }, 
+							css: {'content-filter-selected': pahub.api.content.getAppliedFilterValueIncluded(false, type, key, null) }, 
 							click: function() { 
-								pahub.api.content.applyFilter(false, $parent.type, $parent.mode == 'toggle', $parent.key, $parent.mode == 'toggle' ? $parent.values()[$index()] : [$parent.values()[$index()]])
+								pahub.api.content.applyFilter(false, type, false, key, null)
+						}">
+							<div class='content-filter-name'>All</div>
+							<div class='content-filter-results' data-bind="
+								visible: !pahub.api.content.getAppliedFilterValueIncluded(false, type, key, null), 
+								text: '(' + pahub.api.content.getApplyFilterResultCount(false, type, false, key, null) + ')'
+							"></div>
+						</div>
+						<!-- ko foreach: names --> 
+							<div class='content-filter-item' data-bind="
+								css: {'content-filter-selected': pahub.api.content.getAppliedFilterValueIncluded(false, $parent.type, $parent.key, $parent.values()[$index()]) }, 
+								click: function() { 
+									pahub.api.content.applyFilter(false, $parent.type, $parent.mode == 'toggle', $parent.key, $parent.mode == 'toggle' ? $parent.values()[$index()] : [$parent.values()[$index()]])
+								}
+							">
+								<div class='content-filter-name' data-bind="text: $data"></div>
+								<div class='content-filter-results' data-bind="
+									visible: !pahub.api.content.getAppliedFilterValueIncluded(false, $parent.type, $parent.key, $parent.values()[$index()]), 
+									text: '(' + pahub.api.content.getApplyFilterResultCount(false, $parent.type, $parent.mode == 'toggle', $parent.key, [$parent.values()[$index()]]) + ')'
+								"></div>
+							</div>
+						<!-- /ko -->
+					</div>
+				<!-- /ko -->
+			<!-- /ko -->
+			<!-- ko if: model.content.online_content_filter_tab() == "sort" -->
+				<div class='content-sort-label'>Direction</div>
+				<div class='content-sort-items-container'>
+					<div class='content-sort-item' data-bind="
+						css: {'content-sort-selected': pahub.api.content.getSortAscending(false) == true }, 
+						click: function() { 
+							pahub.api.content.setSortAscending(false, true)
+						}
+					">
+						<div class='content-sort-name' data-bind="text: 'Ascending'"></div>
+					</div>
+					<div class='content-sort-item' data-bind="
+						css: {'content-sort-selected': pahub.api.content.getSortAscending(false) == false }, 
+						click: function() { 
+							pahub.api.content.setSortAscending(false, false)
+						}
+					">
+						<div class='content-sort-name' data-bind="text: 'Descending'"></div>
+					</div>
+				</div>
+				<div class='content-sort-label'>Sort By</div>
+				<div class='content-sort-items-container'>
+					<!-- ko foreach: content.online_content_sort_methods -->
+						<div class='content-sort-item' data-bind="
+							css: {'content-sort-selected': pahub.api.content.getSort(false) == name }, 
+							click: function() { 
+								pahub.api.content.applySort(false, name)
 							}
 						">
-							<div class='content-filter-name' data-bind="text: $data"></div>
-							<div class='content-filter-results' data-bind="
-								visible: !pahub.api.content.getAppliedFilterValueIncluded(false, $parent.type, $parent.key, $parent.values()[$index()]), 
-								text: '(' + pahub.api.content.getApplyFilterResultCount(false, $parent.type, $parent.mode == 'toggle', $parent.key, [$parent.values()[$index()]]) + ')'
-							"></div>
+							<div class='content-sort-name' data-bind="text: name"></div>
 						</div>
 					<!-- /ko -->
 				</div>
 			<!-- /ko -->
-		<!-- /ko -->
-		<!-- ko ifnot: model.content.online_content_filter_view -->
-			<div class='content-sort-label'>Direction</div>
-			<div class='content-sort-items-container'>
-				<div class='content-sort-item' data-bind="
-					css: {'content-sort-selected': pahub.api.content.getSortAscending(false)() == true }, 
-					click: function() { 
-						pahub.api.content.setSortAscending(false, true)
-					}
-				">
-					<div class='content-sort-name' data-bind="text: 'Ascending'"></div>
-				</div>
-				<div class='content-sort-item' data-bind="
-					css: {'content-sort-selected': pahub.api.content.getSortAscending(false)() == false }, 
-					click: function() { 
-						pahub.api.content.setSortAscending(false, false)
-					}
-				">
-					<div class='content-sort-name' data-bind="text: 'Descending'"></div>
-				</div>
-			</div>
-			<div class='content-sort-label'>Sort By</div>
-			<div class='content-sort-items-container'>
-				<!-- ko foreach: content.online_content_sort_methods -->
-					<div class='content-sort-item' data-bind="
-						css: {'content-sort-selected': pahub.api.content.getSort(false) == name }, 
-						click: function() { 
-							pahub.api.content.applySort(false, name)
-						}
-					">
-						<div class='content-sort-name' data-bind="text: name"></div>
-					</div>
-				<!-- /ko -->
-			</div>
-		<!-- /ko -->
-	</div>
+		</div>
+	<!-- /ko -->
 	<div data-bind="text: 'Showing ' + content.online_content_items.filtered_list(model.content.online_content_filters())().length + ' of ' + content.online_content_items().length + ' items.'"></div>
 	<!-- ko foreach: content.online_content_items.filtered_list(model.content.online_content_filters()) --> 
 		<div class='content-item-cont' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, event: {mouseover: function() {model.content.hover_online_content($data)}, mouseout: function() {model.content.hover_online_content(null)}}, css: {'content-update-available': local_content() ? data.version != local_content().data.version : false}">
 			<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
-			<div class='content-item' data-bind="click: function() { }">
+			<div class='content-item' data-bind="click: function() { pahub.api.content.installContentItem(content_id) }">
 				<div class='content-name' data-bind='text: data.display_name'></div>
 			</div>
 		</div>

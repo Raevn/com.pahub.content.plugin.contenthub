@@ -17,7 +17,9 @@
 	margin-right: 10px;
 	margin-bottom: 10px;
 	padding: 5px;
-	border: 1px solid #515151;
+	border-left: 1px solid #515151;
+	border-right: 1px solid #515151;
+	border-bottom: 1px solid #515151;
 	background-color: #1A1A1A;
 }
 
@@ -147,6 +149,22 @@ img.content-image {
 
 .content-filter-item:hover .content-filter-results {
 	display: inline-block;
+}
+
+.sub-tab-container {
+	display: block;
+	position: relative;
+	left: 0px;
+	right: 0px;
+	margin-right: 10px;
+	border-bottom: 1px solid #515151;
+}
+
+.far-right-tab-list {
+	display: block;
+	position: absolute;
+	right: 5px;
+	bottom: 5px;
 }
 
 /* Move this to plugin store css */
