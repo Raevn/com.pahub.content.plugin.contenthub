@@ -87,7 +87,7 @@
 	<div data-bind="text: 'Showing ' + content.local_content_items.filtered_list(model.content.local_content_filters())().length + ' of ' + content.local_content_items().length + ' items.'"></div>
 	<div class="content-list">
 		<!-- ko foreach: content.local_content_items.filtered_list(model.content.local_content_filters()) --> 
-			<div class='content-item-cont' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',' + (data.enabled() ? 1.0 : 0.25) + ')'}, event: {mouseover: function() {model.content.hover_local_content($data)}, mouseout: function() {model.content.hover_local_content(null)}}, css: {'content-disabled': !data.enabled(), 'content-update-available': online_content() ? data.version != online_content().data.version : false}">
+			<div class='content-item-cont' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',' + (data.enabled() ? 1.0 : 0.25) + ')'}, event: {mouseover: function() {model.content.showContentInformation(true, $data.content_id)}, mouseout: function() {model.content.showContentInformation(true, null)}}, css: {'content-disabled': !data.enabled(), 'content-update-available': online_content() ? data.version != online_content().data.version : false}">
 				<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
 				<div class='content-item' data-bind="click: function() { pahub.api.content.setContentEnabled($data, !$data.data.enabled())}">
 					<div class='content-name' data-bind='text: data.display_name'></div>
@@ -99,22 +99,5 @@
 		<!-- /ko -->
 	</div>
 </div>
-<div class="content-detail">
-	<!-- ko ifnot: model.content.hover_local_content() == null -->
-		<!-- ko with: model.content.hover_local_content -->
-		<div class='content-detail-cont' data-bind="css: {'content-disabled': !data.enabled(), 'content-update-available': online_content() ? data.version != online_content().data.version : false}">
-			<img class='content-detail-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
-			<div class='content-detail-item' data-bind="click: function() { pahub.api.content.setContentEnabled($data, !$data.data.enabled())}">
-				<div class='content-detail-checkbox'>
-					<input type='checkbox' data-bind='checked: data.enabled, click: function() { pahub.api.content.setContentEnabled($data, $data.data.enabled()); return true}'></input><label></label>
-				</div>	
-				<div class='content-detail-name' data-bind='text: data.display_name'></div>
-				<div class='content-detail-description' data-bind='text: data.description'></div>
-				<div class='content-detail-type'>
-					<div class='content-detail-type-inner' data-bind="style: {background: 'rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, text: $data.store.data.content_name"></div>
-				</div>
-			</div>
-		</div>
-		<!-- /ko -->
-	<!-- /ko -->
+<div id="content-detail-local" class="content-detail">
 </div>

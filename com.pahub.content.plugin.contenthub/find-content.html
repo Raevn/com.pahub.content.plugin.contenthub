@@ -86,7 +86,7 @@
 	<!-- /ko -->
 	<div data-bind="text: 'Showing ' + content.online_content_items.filtered_list(model.content.online_content_filters())().length + ' of ' + content.online_content_items().length + ' items.'"></div>
 	<!-- ko foreach: content.online_content_items.filtered_list(model.content.online_content_filters()) --> 
-		<div class='content-item-cont' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, event: {mouseover: function() {model.content.hover_online_content($data)}, mouseout: function() {model.content.hover_online_content(null)}}, css: {'content-update-available': local_content() ? data.version != local_content().data.version : false}">
+		<div class='content-item-cont' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, event: {mouseover: function() {model.content.showContentInformation(false, $data.content_id)}, mouseout: function() {model.content.showContentInformation(false, $data.content_id)}}, css: {'content-update-available': local_content() ? data.version != local_content().data.version : false}">
 			<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
 			<div class='content-item' data-bind="click: function() { pahub.api.content.installContentItem(content_id) }">
 				<div class='content-name' data-bind='text: data.display_name'></div>
@@ -94,19 +94,5 @@
 		</div>
 	<!-- /ko -->
 </div>
-<div class="content-detail">
-	<!-- ko ifnot: model.content.hover_online_content() == null -->
-		<!-- ko with: model.content.hover_online_content -->
-		<div class='content-detail-cont' data-bind="css: {'content-update-available': local_content() ? data.version != local_content().data.version : false}">
-			<img class='content-detail-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
-			<div class='content-detail-item'>
-				<div class='content-detail-name' data-bind='text: data.display_name'></div>
-				<div class='content-detail-description' data-bind='text: data.description'></div>
-				<div class='content-detail-type'>
-					<div class='content-detail-type-inner' data-bind="style: {background: 'rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, text: $data.store.data.content_name"></div>
-				</div>
-			</div>
-		</div>
-		<!-- /ko -->
-	<!-- /ko -->
+<div id="content-detail-online" class="content-detail">
 </div>
