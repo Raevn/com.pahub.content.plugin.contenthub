@@ -86,10 +86,16 @@
 	<!-- /ko -->
 	<div data-bind="text: 'Showing ' + content.online_content_items.filtered_list(model.content.online_content_filters())().length + ' of ' + content.online_content_items().length + ' items.'"></div>
 	<!-- ko foreach: content.online_content_items.filtered_list(model.content.online_content_filters()) --> 
-		<div class='content-item-cont' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, event: {mouseover: function() {model.content.showContentInformation(false, $data.content_id)}, mouseout: function() {model.content.showContentInformation(false, $data.content_id)}}, css: {'content-update-available': local_content() ? data.version != local_content().data.version : false}">
+		<div class='content-item-cont' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, css: {'content-update-available': local_content() ? data.version != local_content().data.version : false}">
 			<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
-			<div class='content-item' data-bind="click: function() { pahub.api.content.installContentItem(content_id) }">
+			<div class='content-item' data-bind="click: function() { model.content.showContentInformation(false, $data.content_id) }">
 				<div class='content-name' data-bind='text: data.display_name'></div>
+				<div class='content-author' data-bind='visible: , text: data.author'></div>
+				<div class='content-version-info'>
+					<span class='content-online-version' data-bind='text: "v" + data.version'></span>
+					<span class='content-version' data-bind='text: (local_content() ? (data.version != local_content().data.version ? "(v" + local_content().data.version + ")" : "") : "")'></span>
+				</div>
+				<div class='content-download'><img src="assets/img/test/download.png" data-bind="click: function() {pahub.api.content.installContentItem(content_id)}"></div>	
 			</div>
 		</div>
 	<!-- /ko -->
