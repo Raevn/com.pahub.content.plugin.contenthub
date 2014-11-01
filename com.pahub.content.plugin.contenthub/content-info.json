@@ -4,22 +4,17 @@
     "display_name": "Content Hub",
     "description": "Core Plugin for managing content and content stores",
     "author": "Raevn",
-    "version": "0.0.1",
-    "date": "2014/10/23",
-    "loc_data": [
-        {
-            "locale_id": "en-us",
-            "data": {
-                "Content_Hub_Plugin": "Content Hub Plugin",
-                "core-content_description": "Core Plugin for managing content and content stores"
-            }
-        }
-    ],
+    "version": "0.1.0",
+    "date": "2014/11/01",
     "resources": [
         "com.pahub.content.plugin.contenthub.js",
         "com.pahub.content.plugin.contenthub.css"
     ],
     "load_func": "load_plugin_content",
     "unload_func": "unload_plugin_content",
-    "enabled": true
+    "enabled": true,
+    "required": {
+        "com.pahub": ">=0.1.0",
+        "com.pahub.content.plugin.settings": ">=0.1.0"
+    }
 }

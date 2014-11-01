@@ -41,7 +41,7 @@
 								<div class='content-filter-name' data-bind="text: $data"></div>
 								<div class='content-filter-results' data-bind="
 									visible: !pahub.api.content.getAppliedFilterValueIncluded(false, $parent.type, $parent.key, $parent.values()[$index()]), 
-									text: '(' + pahub.api.content.getApplyFilterResultCount(false, $parent.type, $parent.mode == 'toggle', $parent.key, [$parent.values()[$index()]]) + ')'
+									text: '(' + pahub.api.content.getApplyFilterResultCount(false, $parent.type, $parent.mode == 'toggle', $parent.key, $parent.mode == 'toggle' ? $parent.values()[$index()] : [$parent.values()[$index()]]) + ')'
 								"></div>
 							</div>
 						<!-- /ko -->
@@ -82,23 +82,33 @@
 					<!-- /ko -->
 				</div>
 			<!-- /ko -->
+			<!-- ko if: model.content.online_content_filter_tab() == "display" -->
+				<div class='checkbox-wrapper'>
+					<input type='checkbox' data-bind='checked: model.content.online_content_group'></input>
+					<label data-bind='click: function() {model.content.online_content_group(!model.content.online_content_group())}'></label>
+				</div>
+				<span data-bind='text: "Group by sort"'></span>
+			<!-- /ko -->
 		</div>
 	<!-- /ko -->
 	<div data-bind="text: 'Showing ' + content.online_content_items.filtered_list(model.content.online_content_filters())().length + ' of ' + content.online_content_items().length + ' items.'"></div>
 	<!-- ko foreach: content.online_content_items.filtered_list(model.content.online_content_filters()) --> 
-		<div class='content-item-cont' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, css: {'content-update-available': local_content() ? data.version != local_content().data.version : false}">
+		<!-- ko if: model.content.online_content_group() && ($index() == 0 || model.content.getContentItemGroup(false, model.content.online_content_items.filtered_list(model.content.online_content_filters())()[$index() - 1].content_id) != model.content.getContentItemGroup(false, $data.content_id)) -->
+			<div class="heading2" style="" data-bind="text: model.content.getContentItemGroup(false, $data.content_id)"></div>
+		<!-- /ko -->
+		<div class='content-item' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, css: {'content-update-available': local_content() ? version() != local_content().version() : false}">
 			<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
-			<div class='content-item' data-bind="click: function() { model.content.showContentInformation(false, $data.content_id) }">
+			<div class='content-item-cont' data-bind="click: function() { model.content.showContentInformation(false, $data.content_id) }">
 				<div class='content-name' data-bind='text: data.display_name'></div>
 				<div class='content-author' data-bind='visible: , text: data.author'></div>
 				<div class='content-version-info'>
-					<span class='content-online-version' data-bind='text: "v" + data.version'></span>
-					<span class='content-version' data-bind='text: (local_content() ? (data.version != local_content().data.version ? "(v" + local_content().data.version + ")" : "") : "")'></span>
+					<span class='content-online-version' data-bind='text: "v" + version()'></span>
+					<span class='content-version' data-bind='text: (local_content() ? (version() != local_content().version() ? "(v" + local_content().version() + ")" : "") : "")'></span>
 				</div>
 				<div class='content-download'><img src="assets/img/test/download.png" data-bind="click: function() {pahub.api.content.installContentItem(content_id)}"></div>	
 			</div>
 		</div>
 	<!-- /ko -->
 </div>
-<div id="content-detail-online" class="content-detail">
+<div id="content-detail-online" class="content-hover-detail">
 </div>

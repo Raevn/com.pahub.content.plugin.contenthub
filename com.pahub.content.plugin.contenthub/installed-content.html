@@ -41,7 +41,7 @@
 								<div class='content-filter-name' data-bind="text: $data"></div>
 								<div class='content-filter-results' data-bind="
 									visible: !pahub.api.content.getAppliedFilterValueIncluded(true, $parent.type, $parent.key, $parent.values()[$index()]), 
-									text: '(' + pahub.api.content.getApplyFilterResultCount(true, $parent.type, $parent.mode == 'toggle', $parent.key, [$parent.values()[$index()]]) + ')'
+									text: '(' + pahub.api.content.getApplyFilterResultCount(true, $parent.type, $parent.mode == 'toggle', $parent.key, $parent.mode == 'toggle' ? $parent.values()[$index()] : [$parent.values()[$index()]]) + ')' 
 								"></div>
 							</div>
 						<!-- /ko -->
@@ -82,27 +82,37 @@
 					<!-- /ko -->
 				</div>
 			<!-- /ko -->
+			<!-- ko if: model.content.local_content_filter_tab() == "display" -->
+				<div class='checkbox-wrapper'>
+					<input type='checkbox' data-bind='checked: model.content.local_content_group'></input>
+					<label data-bind='click: function() {model.content.local_content_group(!model.content.local_content_group())}'></label>
+				</div>
+				<span data-bind='text: "Group by sort"'></span>
+			<!-- /ko -->
 		</div>
 	<!-- /ko -->
 	<div data-bind="text: 'Showing ' + content.local_content_items.filtered_list(model.content.local_content_filters())().length + ' of ' + content.local_content_items().length + ' items.'"></div>
 	<div class="content-list">
-		<!-- ko foreach: content.local_content_items.filtered_list(model.content.local_content_filters()) --> 
-			<div class='content-item-cont' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',' + (data.enabled() ? 1.0 : 0.25) + ')'}, css: {'content-disabled': !data.enabled(), 'content-update-available': online_content() ? data.version != online_content().data.version : false}">
+		<!-- ko foreach: model.content.local_content_items.filtered_list(model.content.local_content_filters()) --> 
+			<!-- ko if: model.content.local_content_group() && ($index() == 0 || model.content.getContentItemGroup(true, model.content.local_content_items.filtered_list(model.content.local_content_filters())()[$index() - 1].content_id) != model.content.getContentItemGroup(true, $data.content_id)) -->
+				<div class="heading2" style="width: 100%" data-bind="text: model.content.getContentItemGroup(true, $data.content_id)"></div>
+			<!-- /ko -->
+			<div class='content-item' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',' + (data.enabled() ? 1.0 : 0.25) + ')'}, css: {'content-disabled': !data.enabled(), 'content-update-available': online_content() ? version() != online_content().version() : false}">
 				<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
-				<div class='content-item' data-bind="click: function() {model.content.showContentInformation(true, $data.content_id)}">
+				<div class='content-item-cont' data-bind="click: function() {model.content.showContentInformation(true, $data.content_id)}">
 					<div class='content-name' data-bind='text: data.display_name'></div>
 					<div class='content-author' data-bind='text: data.author'></div>
 					<div class='content-version-info'>
-						<span class='content-version' data-bind='text: "v" + data.version'></span>
-						<span class='content-online-version' data-bind='text: (online_content() ? (data.version != online_content().data.version ? "(v" + online_content().data.version + ")" : "") : "")'></span>
+						<span class='content-version' data-bind='text: "v" + version()'></span>
+						<span class='content-online-version' data-bind='text: (online_content() ? (version() != online_content().version() ? "(v" + online_content().version() + ")" : "") : "")'></span>
 					</div>
 					<div class='content-checkbox'>
-						<input type='checkbox' data-bind='checked: data.enabled, click: function() { pahub.api.content.setContentEnabled($data, $data.data.enabled()); return true}'></input><label></label>
+						<input type='checkbox' data-bind='click: function(data, event) { model.content.showContentInformation(true, $data.content_id); pahub.api.content.setContentEnabled($data, !$data.data.enabled()); if (model.isCorePlugin($data.content_id) == true) {event.stopImmediatePropagation(); return false;}; return true;}, checked: data.enabled'></input><label></label>
 					</div>	
 				</div>
 			</div>
 		<!-- /ko -->
 	</div>
 </div>
-<div id="content-detail-local" class="content-detail">
+<div id="content-detail-local" class="content-hover-detail">
 </div>

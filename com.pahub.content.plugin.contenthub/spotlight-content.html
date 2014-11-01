@@ -1,4 +1,93 @@
 <div class='heading1' data-bind='text: model.current_loc_data()["CONTENT_SPOTLIGHT"] || "CONTENT SPOTLIGHT"'></div>
-<!-- ko foreach: model.content.content_stores -->
-	<div class='heading2' data-bind='text: data.content_name'></div>
+<!-- ko with: model.content.spotlight_content() --> 
+	<div class='content-detail' data-bind="css: {'content-update-available': local_content() ? version() != local_content().version() : false}">
+		<div class='content-item' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}">
+			<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
+		</div>
+		<div class='content-detail-item'>
+			<div class='content-name' data-bind='text: data.display_name'></div>
+			<div class='content-type' data-bind='text: store.data.content_name, style: {color: "rgba(" + $data.store.data.content_colour[0] + "," + $data.store.data.content_colour[1] + "," + $data.store.data.content_colour[2] + ",1.0)"}'></div>
+			<div class='content-author' data-bind='text: "by " + data.author'></div>
+			<div class='content-version' data-bind='text: (local_content() ? "Current version: v" + local_content().version() + ", New version" : "Version") + ": v" + version()'></div>
+			<!-- ko if: data.build -->
+				<div class='content-build' data-bind='text: ", Build " + data.build'></div>
+			<!-- /ko -->
+			<!-- ko if: data.date -->
+				<div class='content-date' data-bind='text: "(" + data.date + ")"'></div>
+			<!-- /ko -->
+			<!-- ko if: data.required -->
+				<div class='content-required' data-bind='text: "Requires: "'></div>
+				<!-- ko foreach: required_array -->
+					<div class='content-required-item' data-bind='text: ($index() > 0 ? ", " : "") + pahub.api.content.getContentName(content_id, false)'></div>
+					<div class='content-required-item-condition' data-bind='text: "(" + condition + ")"'></div>
+				<!-- /ko -->
+			<!-- /ko -->
+			<div class="content-actions">
+				<!-- ko if: data.forum -->
+					<div class="text-button" data-bind='click: function() {shell.openExternal(data.forum)}'>Forum</div>
+				<!-- /ko -->
+				<!-- ko if: data.url -->
+					<!-- ko if: local_content() && semver.gt(version(), local_content().version()) -->
+						<div class="text-button-update text-button" data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Update</div>
+					<!-- /ko -->	
+					<!-- ko ifnot: local_content() && semver.gt(version(), local_content().version()) -->
+						<div class="text-button" data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Install</div>
+					<!-- /ko -->
+				<!-- /ko -->
+				<!-- ko if: local_content() && model.isCorePlugin(data.content_id) == false -->
+					<div class="text-button-uninstall text-button" data-bind='click: function() {alert("Not Yet Implemented")}'>Uninstall</div>
+				<!-- /ko -->
+			</div>
+			<div class='content-description' data-bind='text: data.description'></div>
+			<!-- ko if: data.update_description -->
+				<div class='content-description-update' data-bind='text: online_content().data.update_description'></div>
+			<!-- /ko -->
+		</div>
+	</div>
+<!-- /ko -->
+<br/>
+<div class='sub-tab-container'>
+	<div data-bind="css: {'selected-tab': model.content.content_spotlight_tab() == 'recent'}, click: function(){ model.content.content_spotlight_tab('recent') }" class="tab">
+		<span class="tab-display-name">Recently Updated</span> 
+	</div>
+	<div data-bind="css: {'selected-tab': model.content.content_spotlight_tab() == 'popular'}, click: function(){ model.content.content_spotlight_tab('popular') }" class="tab">
+		<span class="tab-display-name">Most Popular</span> 
+	</div>
+	<div data-bind="css: {'selected-tab': model.content.content_spotlight_tab() == 'downloads'}, click: function(){ model.content.content_spotlight_tab('downloads') }" class="tab">
+		<span class="tab-display-name">Most Downloaded</span> 
+	</div>
+	<div data-bind="css: {'selected-tab': model.content.content_spotlight_tab() == 'update'}, click: function(){  model.content.content_spotlight_tab('update') }" class="tab">
+		<span class="tab-display-name">Updates Available</span> 
+	</div>
+</div>
+
+<!-- ko if: model.content.content_spotlight_tab() == 'recent' -->
+	<div class='spotlight-tab-container'>
+		<div class="content-spotlight-list">
+			<!-- ko foreach: model.content.content_spotlight_recent() -->
+				<div class="content-spotlight-list-item" data-bind="click: function() { model.content.spotlight_content(pahub.api.content.getContentItem(false, data.content_id)) }">
+					<div class='content-name' data-bind='text: data.display_name'></div>
+					<div class='content-date' data-bind='text: "[" + data.date + "] "'></div>
+					<div class='content-type' data-bind='text: store.data.content_name, style: {color: "rgba(" + $data.store.data.content_colour[0] + "," + $data.store.data.content_colour[1] + "," + $data.store.data.content_colour[2] + ",1.0)"}'></div>
+				</div>
+			<!-- /ko -->
+			<div class="text-button" data-bind='click: function() {if (model.content.content_spotlight_recent_count() < model.content.online_content_items().length) {model.content.content_spotlight_recent_count(model.content.content_spotlight_recent_count() + 1)}}'>Show More</div>
+			<div class="text-button" data-bind='click: function() {if (model.content.content_spotlight_recent_count() > 1) {model.content.content_spotlight_recent_count(model.content.content_spotlight_recent_count() - 1)}}'>Show Less</div>
+		</div>
+	</div>
+<!-- /ko -->
+
+<!-- ko if: model.content.content_spotlight_tab() == 'update' -->
+	<div class='spotlight-tab-container'>
+		<div class="content-spotlight-list">
+				<!-- ko foreach: model.content.online_content_items --> 
+					<!-- ko if: local_content() && version() != local_content().version() -->
+							<div class="content-spotlight-list-item" data-bind="click: function() { model.content.spotlight_content(pahub.api.content.getContentItem(false, data.content_id)) }">
+								<div class='content-name' data-bind='text: data.display_name'></div>
+								<div class='content-type' data-bind='text: store.data.content_name, style: {color: "rgba(" + $data.store.data.content_colour[0] + "," + $data.store.data.content_colour[1] + "," + $data.store.data.content_colour[2] + ",1.0)"}'></div>
+							</div>
+					<!-- /ko -->
+				<!-- /ko -->
+		</div>
+	</div>
 <!-- /ko -->

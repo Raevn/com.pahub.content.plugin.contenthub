@@ -10,6 +10,8 @@ function load_plugin_content(data, folder) {
 		removeContentItem:  function(local, content_id) { model.content.removeContentItem(local, content_id); },
 		removeContentStore: function(store_id) { model.content.removeContentStore(store_id);},
 		
+		fixVersionString: function(version) { return model.content.fixVersionString(version);},
+		
 		//install, update, delete etc.
 		installContentItem: function(content_id) { model.content.installContentItem(content_id); },
 		
@@ -30,6 +32,7 @@ function load_plugin_content(data, folder) {
 		getContentStore: function(store_id) { return model.content.getContentStore(store_id); },
 		getContentItems: function(local) { return model.content.getContentItems(local)();},
 		getContentItem: function(local, content_id) { return model.content.getContentItem(local, content_id); },
+		getContentName: function(content_id, prefer_local) { return model.content.getContentName(content_id, prefer_local); },
 		
 		addFilterOption: function(local, label, type, key, mode, names, values) { model.content.addFilterOption(local, label, type, key, mode, names, values); },
 		removeFilterOption: function(local, label, type, key) { model.content.removeFilterOption(local, label, type, key); },
@@ -39,7 +42,7 @@ function load_plugin_content(data, folder) {
 		getAppliedFilterValueIncluded: function(local, type, key, value) { return model.content.getAppliedFilterValueIncluded(local, type, key, value); },
 		getApplyFilterResultCount: function(local, type, toggle, key, value) { return model.content.getApplyFilterResultCount(local, type, toggle, key, value)},
 		
-		addSortMethod: function(local, name, sort_function) { model.content.addSortMethod(local, name, sort_function); },
+		addSortMethod: function(local, name, sort_function, group_function) { model.content.addSortMethod(local, name, sort_function, group_function); },
 		//removeSortMethod
 		applySort: function(local, sort_method) { model.content.applySort(local, sort_method)},
 		getSort: function(local) { return model.content.getSort(local)();},
@@ -50,6 +53,17 @@ function load_plugin_content(data, folder) {
 		refreshLocalContent: function(store_id) { model.content.refreshLocalContent(store_id);},
 		refreshAllOnlineContent: function() { model.content.refreshAllOnlineContent();},
 		refreshOnlineContent: function(store_id) { model.content.refreshOnlineContent(store_id);},
+	}
+	
+	ko.observableArray.fn.sorted_list = function(sort_method) {
+		return ko.pureComputed(function() {	
+			var all_items = this();
+			var sorted_items = $.extend([], all_items);
+			
+			sorted_items.sort(sort_method);
+			
+			return sorted_items;
+		}, this);
 	}
 	
 	ko.observableArray.fn.filtered_list = function(filters) {
@@ -65,7 +79,7 @@ function load_plugin_content(data, folder) {
 							//matched = false;
 							if (filters[j].type == "match") {
 								for (var k = 0; k < filters[j].value.length; k++) {
-									if (ko.unwrap(current[filters[j].key]) != filters[j].value[k]) {
+									if (ko.unwrap(current[filters[j].key]).toLowerCase() != filters[j].value[k].toLowerCase()) {
 										//matched = true;
 										include = false;
 									}
@@ -73,16 +87,23 @@ function load_plugin_content(data, folder) {
 							}
 							if (filters[j].type == "data-match") {
 								for (var k = 0; k < filters[j].value.length; k++) {
-									if (ko.unwrap(current.data[filters[j].key]) != filters[j].value[k]) {
+									if (ko.unwrap(current.data[filters[j].key]).toLowerCase() != filters[j].value[k].toLowerCase()) {
 										//matched = true;
 										include = false;
 									}
 								}
 							}
+							//TODO: These need to not be case sensitive
 							if (filters[j].type == "contains") {
 								for (var k = 0; k < filters[j].value.length; k++) {
 									if(ko.unwrap(current).hasOwnProperty(filters[j].key) == true) {
-										if (ko.unwrap(current[filters[j].key]).indexOf(filters[j].value[k]) == -1) {
+										var matches = 0;
+										$.each(ko.unwrap(current[filters[j].key]), function(index, value) {
+											if (value.toLowerCase() == filters[j].value[k].toLowerCase()) {
+												matches++;
+											}
+										});					
+										if (matches == 0) {
 											//matched = true;
 											include = false;
 										}
@@ -94,7 +115,13 @@ function load_plugin_content(data, folder) {
 							if (filters[j].type == "data-contains") {
 								for (var k = 0; k < filters[j].value.length; k++) {
 									if(ko.unwrap(current.data).hasOwnProperty(filters[j].key) == true) {
-										if (ko.unwrap(current.data[filters[j].key]).indexOf(filters[j].value[k]) == -1) {
+										var matches = 0;
+										$.each(ko.unwrap(current.data[filters[j].key]), function(index, value) {
+											if (value.toLowerCase() == filters[j].value[k].toLowerCase()) {
+												matches++;
+											}
+										});
+										if (matches == 0) {
 											//matched = true;
 											include = false;
 										}
@@ -129,6 +156,7 @@ function load_plugin_content(data, folder) {
 		local_content_sort: ko.observable(""),
 		local_content_sort_asc: ko.observable(true),
 		local_content_sort_methods: ko.observableArray(),
+		local_content_group: ko.observable(true),
 		
 		online_content_filters: ko.observableArray(),
 		online_content_filter_options: ko.observableArray(),
@@ -137,9 +165,34 @@ function load_plugin_content(data, folder) {
 		online_content_sort: ko.observable(""),
 		online_content_sort_asc: ko.observable(true),
 		online_content_sort_methods: ko.observableArray(),
+		online_content_group: ko.observable(true),
 		
 		hover_local_content: ko.observable(),
 		hover_online_content: ko.observable(),
+		
+		fixVersionString: function(version) {
+			var components = version.split(".");
+			var major = 0;
+			var minor = 0;
+			var revision = 0;
+			var tag = "";
+			if(components.length > 0) {
+				major = parseInt(components[0]) || 0;
+			}
+			if(components.length > 1) {
+				minor = parseInt(components[1]) || 0;
+			}
+			if(components.length > 2) {
+				var tag_components = components[2].split("-");
+				if(tag_components.length > 0) {
+					revision = parseInt(tag_components[0]) || 0;
+				}
+				if(tag_components.length > 1) {
+					tag = tag_components[1];
+				}
+			}
+			return major + "." + minor + "." + revision + (tag != "" ? "-" + tag : "");
+		},
 		
 		showContentInformation: function(local, content_id) {
 			if (content_id == null) {
@@ -165,17 +218,52 @@ function load_plugin_content(data, folder) {
 						} else {
 							html = 
 								"<!-- ko with: model.content.hover_local_content -->" +
-								"<div class='content-detail-cont' data-bind=\"css: {'content-disabled': !data.enabled(), 'content-update-available': online_content() ? data.version != online_content().data.version : false}\">" +
-									"<img class='content-detail-image' alt='' title='' data-bind=\"attr : { src : $data.icon() }\"/>" +
-									"<div class='content-detail-item' data-bind=\"click: function() { pahub.api.content.setContentEnabled($data, !$data.data.enabled())}\">" +
+								"<div class='content-detail' data-bind=\"css: {'content-disabled': !data.enabled(), 'content-update-available': online_content() ? version() != online_content().version() : false}\">" +
+									"<div class='content-item' data-bind='style: {border: \"2px solid rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'>" +
+										"<img class='content-image' alt='' title='' data-bind=\"attr : { src : $data.icon() }\"/>" +
+									"</div>" +
+									"<div class='content-detail-item'>" +
+										/*
 										"<div class='content-detail-checkbox'>" +
 											"<input type='checkbox' data-bind='checked: data.enabled, click: function() { pahub.api.content.setContentEnabled($data, $data.data.enabled()); return true}'></input><label></label>" +
 										"</div>	" +
-										"<div class='content-detail-name' data-bind='text: data.display_name'></div>" +
-										"<div class='content-detail-description' data-bind='text: data.description'></div>" +
-										"<div class='content-detail-type'>" +
-											"<div class='content-detail-type-inner' data-bind=\"style: {background: 'rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, text: $data.store.data.content_name\"></div>" +
+										*/
+										"<div class='content-actions'>" +
 										"</div>" +
+										"<div class='content-name' data-bind='text: data.display_name'></div>" +
+										"<div class='content-type' data-bind='text: store.data.content_name, style: {color: \"rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'></div>" +
+										"<div class='content-author' data-bind='text: \"by \" + data.author'></div>" +
+										"<div class='content-version' data-bind='text: \"Version: v\" + version()'></div>" +
+										"<!-- ko if: data.build -->" +
+											"<div class='content-build' data-bind='text: \", Build \" + data.build'></div>" +
+										"<!-- /ko -->" +
+										"<!-- ko if: data.date -->" +
+											"<div class='content-date' data-bind='text: \"(\" + data.date + \")\"'></div>" +
+										"<!-- /ko -->" +
+										"<!-- ko if: data.required -->" +
+											"<div class='content-required' data-bind='text: \"Requires: \"'></div>" +
+											"<!-- ko foreach: required_array -->" +
+												"<div class='content-required-item' data-bind='text: ($index() > 0 ? \", \" : \"\") + pahub.api.content.getContentName(content_id, true)'></div>" +
+												"<div class='content-required-item-condition' data-bind='text: \"(\" + condition + \")\"'></div>" +
+											"<!-- /ko -->" +
+										"<!-- /ko -->" +
+										"<div class='content-actions'>" +
+											"<!-- ko if: data.forum -->" +
+												"<div class='text-button' data-bind='click: function() {shell.openExternal(data.forum)}'>Forum</div>" +
+											"<!-- /ko -->" +
+											"<!-- ko if: online_content() && online_content().data.url -->" +
+												"<!-- ko if: semver.gt(online_content().version(), version()) -->" +
+													"<div class='text-button-update text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Update</div>" +
+												"<!-- /ko -->" +
+												"<!-- ko ifnot: semver.gt(online_content().version(), version()) -->" +
+													"<div class='text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Install</div>" +
+												"<!-- /ko -->" +
+											"<!-- /ko -->" +
+											"<!-- ko if: model.isCorePlugin(data.content_id) == false -->" +
+												"<div class='text-button-uninstall text-button' data-bind='click: function() {alert(\"Not Yet Implemented\")}'>Uninstall</div>" +
+											"<!-- /ko -->" +
+										"</div>" +
+										"<div class='content-description' data-bind='text: data.description'></div>" +
 									"</div>" +
 								"</div>" +
 								"<!-- /ko -->";
@@ -193,14 +281,47 @@ function load_plugin_content(data, folder) {
 						} else {
 							html = 
 								"<!-- ko with: model.content.hover_online_content -->" +
-								"<div class='content-detail-cont' data-bind=\"css: {'content-update-available': local_content() ? data.version != local_content().data.version : false}\">" +
-									"<img class='content-detail-image' alt='' title='' data-bind=\"attr : { src : $data.icon() }\"/>" +
+								"<div class='content-detail' data-bind=\"css: {'content-update-available': local_content() ? version() != local_content().version() : false}\">" +
+									"<div class='content-item' data-bind='style: {border: \"2px solid rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'>" +
+										"<img class='content-image' alt='' title='' data-bind=\"attr : { src : $data.icon() }\"/>" +
+									"</div>" +
 									"<div class='content-detail-item'>" +
-										"<div class='content-detail-name' data-bind='text: data.display_name'></div>" +
-										"<div class='content-detail-description' data-bind='text: data.description'></div>" +
-										"<div class='content-detail-type'>" +
-											"<div class='content-detail-type-inner' data-bind=\"style: {background: 'rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, text: $data.store.data.content_name\"></div>" +
+										/*
+										"<div class='content-detail-checkbox'>" +
+											"<input type='checkbox' data-bind='checked: data.enabled, click: function() { pahub.api.content.setContentEnabled($data, $data.data.enabled()); return true}'></input><label></label>" +
+										"</div>	" +
+										*/
+										"<div class='content-name' data-bind='text: data.display_name'></div>" +
+										"<div class='content-type' data-bind='text: store.data.content_name, style: {color: \"rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'></div>" +
+										"<div class='content-author' data-bind='text: \"by \" + data.author'></div>" +
+										"<div class='content-version' data-bind='text: \"Version: v\" + version()'></div>" +
+										"<!-- ko if: data.build -->" +
+											"<div class='content-build' data-bind='text: \", Build \" + data.build'></div>" +
+										"<!-- /ko -->" +
+										"<!-- ko if: data.date -->" +
+											"<div class='content-date' data-bind='text: \"(\" + data.date + \")\"'></div>" +
+										"<!-- /ko -->" +
+										"<!-- ko if: data.required -->" +
+											"<div class='content-required' data-bind='text: \"Requires: \"'></div>" +
+											"<!-- ko foreach: required_array -->" +
+												"<div class='content-required-item' data-bind='text: ($index() > 0 ? \", \" : \"\") + pahub.api.content.getContentName(content_id, false)'></div>" +
+												"<div class='content-required-item-condition' data-bind='text: \"(\" + condition + \")\"'></div>" +
+											"<!-- /ko -->" +
+										"<!-- /ko -->" +
+										"<div class='content-actions'>" +
+											"<!-- ko if: data.forum -->" +
+												"<div class='text-button' data-bind='click: function() {shell.openExternal(data.forum)}'>Forum</div>" +
+											"<!-- /ko -->" +
+											"<!-- ko if: data.url -->" +
+												"<!-- ko if: local_content() && semver.gt(version(), local_content().version()) -->" +
+													"<div class='text-button-update text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Update</div>" +
+												"<!-- /ko -->" +
+												"<!-- ko ifnot: local_content() && semver.gt(version(), local_content().version()) -->" +
+													"<div class='text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Install</div>" +
+												"<!-- /ko -->" +
+											"<!-- /ko -->" +
 										"</div>" +
+										"<div class='content-description' data-bind='text: data.description'></div>" +
 									"</div>" +
 								"</div>" +
 								"<!-- /ko -->";
@@ -256,7 +377,15 @@ function load_plugin_content(data, folder) {
 						url: url, //ko.mapping
 						online_content: ko.observable(),
 						local_content: ko.observable(),
+						required_array: ko.observableArray(),
+						version: ko.observable(pahub.api.content.fixVersionString(data.version)),
 						data: data //ko.mapping
+					}
+					
+					if (data.hasOwnProperty("required") == true) {
+						for (var key in data.required) {
+							item.required_array.push({"content_id": key, "condition": data.required[key]});
+						}
 					}
 					var icon_url = "";
 					if (data.hasOwnProperty("icon") == false) {
@@ -288,8 +417,8 @@ function load_plugin_content(data, folder) {
 							var online_content = model.content.getContentItem(false, item.content_id);
 							item.online_content(online_content);
 							online_content.local_content(item);
-							if (item.data.version != online_content.data.version) {
-								pahub.api.log.addLogMessage("info", "New version of " + store.data.content_name + " '" + item.content_id + "', Local:" + item.data.version + ", Online: " + online_content.data.version);
+							if (item.version() != online_content.version()) {
+								pahub.api.log.addLogMessage("info", "New version of " + store.data.content_name + " '" + item.content_id + "', Local:" + item.version() + ", Online: " + online_content.version());
 							}
 						}
 					} else {
@@ -300,8 +429,8 @@ function load_plugin_content(data, folder) {
 							var local_content = model.content.getContentItem(true, item.content_id);
 							item.local_content(local_content);
 							local_content.online_content(item);
-							if (item.data.version != local_content.data.version) {
-								pahub.api.log.addLogMessage("info", "New version of " + store.data.content_name + " '" + item.content_id + "', Local:" + local_content.data.version + ", Online: " + item.data.version);
+							if (item.version() != local_content.version()) {
+								pahub.api.log.addLogMessage("info", "New version of " + store.data.content_name + " '" + item.content_id + "', Local:" + local_content.version() + ", Online: " + item.version());
 							}
 						}
 					}
@@ -369,8 +498,10 @@ function load_plugin_content(data, folder) {
 		installContentItem: function(content_id) {
 			if (pahub.api.content.contentItemExists(false, content_id) == true) {
 				var content = pahub.api.content.getContentItem(false, content_id);
+				//check for dependencies
+				//check no dependencies are core plugins
+				
 				if (content.data.hasOwnProperty("url") == true) {
-					//check for dependencies
 				
 					pahub.api.resource.loadResource(content.data.url, "save", {
 						name: content.display_name,
@@ -389,7 +520,12 @@ function load_plugin_content(data, folder) {
 									getZippedFilePath(path.join(constant.PAHUB_CACHE_DIR, content.content_id + ".zip"), "content-info.json")
 								);
 							}
-							pahub.api.content.refreshLocalContent(content.store_id);
+							if (model.isCorePlugin(content_id) == true) {
+								alert("PA Hub will now restart to complete installation of a Core Plugin");
+								restart();
+							} else {
+								pahub.api.content.refreshLocalContent(content.store_id);
+							}
 							//switch to local content tab?
 						}
 					});
@@ -431,7 +567,7 @@ function load_plugin_content(data, folder) {
 					//content is disabled
 					dependencyEnabled = false;
 				}
-				if (semver.satisfies(dependency_content.data.version, test) == false ) {
+				if (semver.satisfies(dependency_content.version(), test) == false ) {
 					dependencyEnabled = false;
 					dependencyExist = false;
 				}				
@@ -533,11 +669,7 @@ function load_plugin_content(data, folder) {
 						var content = pahub.api.content.getContentItem(true, item);
 						pahub.api.content.disableContent(content);
 					});
-				} else {
-					
 				}
-				
-
 				
 				if (pahub.api.content.contentDependentsDisabled(true, dependents) == true) {
 					pahub.api.log.addLogMessage("info", content_item.store.data.content_name + " '" + content_item.content_id + "': disabled");
@@ -590,6 +722,31 @@ function load_plugin_content(data, folder) {
 			}
 		},
 		
+		getContentName: function(content_id, prefer_local) {
+			var local_content = pahub.api.content.getContentItem(true, content_id);
+			var online_content = pahub.api.content.getContentItem(false, content_id);
+			
+			if (local_content == false && online_content == false) {
+				return "";
+			}
+			
+			if (local_content == false) {
+				return online_content.data.display_name;
+			}
+			
+			if (online_content == false) {
+				return local_content.data.display_name;
+			}
+			
+			if (local_content && prefer_local == true) {
+				return local_content.data.display_name;
+			}
+			
+			if (online_content && prefer_local == false) {
+				return online_content.data.display_name;
+			}
+		},
+		
 		//add filter method (AND, OR) for toggle mode
 		addFilterOption: function(local, label, type, key, mode, names, values) {
 			var options_list = model.content.getFilterOptions(local);
@@ -602,6 +759,7 @@ function load_plugin_content(data, folder) {
 				values: values,
 				mode: mode
 			});
+			
 			
 			//initial filter
 			pahub.api.content.applyFilter(local, type, false, key, null);
@@ -653,7 +811,6 @@ function load_plugin_content(data, folder) {
 			if (found == false) {
 				filter_list.push({key: key, type: type, value:value});
 			}
-			filter_list.valueHasMutated();
 		},
 		
 		removeFilter: function(local, type, key, value) {
@@ -701,12 +858,13 @@ function load_plugin_content(data, folder) {
 			return model.content.getContentItems(local).filtered_list(new_filter_list())().length;
 		},
 		
-		addSortMethod: function(local, name, sort_function) {
+		addSortMethod: function(local, name, sort_function, group_function) {
 			var sort_methods = model.content.getSortMethods(local);
 			var sort = model.content.getSort(local);
 			sort_methods.push({
 				name: name,
-				method: sort_function
+				method: sort_function,
+				group: group_function
 			});
 			
 			if (sort() == "") {
@@ -729,6 +887,17 @@ function load_plugin_content(data, folder) {
 				return model.content.local_content_sort;
 			} else {
 				return model.content.online_content_sort;
+			}
+		},
+		
+		getContentItemGroup: function(local, content_id) {
+			var content = pahub.api.content.getContentItem(local, content_id);
+			var sort = model.content.getSort(local);
+			var sort_methods = model.content.getSortMethods(local);
+			if (getMapItemIndex(sort_methods(), "name", sort()) > -1) {
+				return sort_methods()[getMapItemIndex(sort_methods(), "name", sort())].group(content);
+			} else {
+				return false;
 			}
 		},
 		
@@ -891,6 +1060,7 @@ function load_plugin_content(data, folder) {
 					pahub.api.resource.loadResource(store.data.online_content_path, "save", {
 						name: store.data.content_name + " catalog",
 						saveas: store_id + ".catalog.json",
+						mode: "async",
 						success: function() {
 							pahub.api.log.addLogMessage("info", "Refreshing online content for store '" + store_id + "'");
 							var catalogJSON = readJSONfromFile(path.join(constant.PAHUB_CACHE_DIR, store_id + ".catalog.json"));
@@ -975,11 +1145,70 @@ function load_plugin_content(data, folder) {
 				return ids;
 			},
 			deferEvaluation: true
+		}),
+		
+		content_spotlight_tab: ko.observable('recent'),
+		content_spotlight_recent_count: ko.observable(5),
+		spotlight_content: ko.observable(),
+		content_spotlight_recent: ko.computed({
+			read: function() {
+				var sort_func = function(left, right) {
+					var leftDate = new Date(left.data.date);
+					var rightDate = new Date(right.data.date);
+					if (left.data.date == undefined) {
+						return 1;
+					}
+					if (right.data.date == undefined) {
+						return -1;
+					}
+					return leftDate == rightDate ? 0 : (leftDate < rightDate ? 1 : -1);
+				}
+			
+				var sorted_content = model.content.getContentItems(false).sorted_list(sort_func)
+				var filtered_content = sorted_content().splice(0,model.content.content_spotlight_recent_count());
+				//if (filtered_content.indexOf(model.content.spotlight_content()) == -1) {
+				if (model.content.spotlight_content() == null ) {
+					model.content.spotlight_content(filtered_content[0]);
+				}
+				return filtered_content
+			},
+			deferEvaluation: true
 		})
 	}
 
 	pahub.api.content.addFilterOption(true, "Content Type", "match", "store_id", "set", model.content.content_store_names, model.content.content_store_ids);
 	pahub.api.content.addFilterOption(false, "Content Type", "match", "store_id", "set", model.content.content_store_names, model.content.content_store_ids);
+	
+	var group_func_first_letter = function (content) {
+		if (content.display_name.length > 0) {
+			return content.display_name.charAt(0);
+		} else {
+			return "";
+		}
+	}
+	
+	var group_func_content_type = function (content) {
+		var store = pahub.api.content.getContentStore(content.store_id);
+		return store.data.content_name;
+	}
+	
+	var group_func_last_updated = function (content) { 
+		var now = new Date();
+		var contentDate = new Date(content.data.date);
+		if ((now - contentDate)/(1000*60*60*24) <= 7) {
+			return "Updated in the last week";
+		}
+		if ((now - contentDate)/(1000*60*60*24) <= 30) {
+			return "Updated in the last month";
+		}
+		if ((now - contentDate)/(1000*60*60*24) <= 365) {
+			return "Updated in the last year";
+		}
+		if ((now - contentDate)/(1000*60*60*24) > 365) {
+			return "Updated over a year ago";
+		}
+		return "Unknown"
+	}
 	
 	pahub.api.content.addSortMethod(true, "Name", function(left, right) {
 		if (pahub.api.content.getSortAscending(true) == true ) {
@@ -987,35 +1216,64 @@ function load_plugin_content(data, folder) {
 		} else {
 			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? 1 : -1);
 		}
-	});
+	}, group_func_first_letter);
+	
 	pahub.api.content.addSortMethod(false, "Name", function(left, right) {
 		if (pahub.api.content.getSortAscending(false) == true ) {
 			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? -1 : 1);
 		} else {
 			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? 1 : -1);
 		}
-	});
+	}, group_func_first_letter);
+	
 	pahub.api.content.addSortMethod(true, "Author", function(left, right) {
 		if (pahub.api.content.getSortAscending(true) == true ) {
 			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? -1 : 1);
 		} else {
 			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? 1 : -1);
 		}
-	});
+	}, function (content) { return content.data.author});
+	
 	pahub.api.content.addSortMethod(false, "Author", function(left, right) {
 		if (pahub.api.content.getSortAscending(false) == true ) {
 			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? -1 : 1);
 		} else {
 			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? 1 : -1);
 		}
-	});
-	pahub.api.content.addSortMethod(true, "Last Updated", function(left, right) {
-		if (pahub.api.content.getSortAscending(true) == true ) {
-			return left.data.date == right.data.date ? 0 : (left.data.date < right.data.date ? -1 : 1);
-		} else {
-			return left.data.date == right.data.date ? 0 : (left.data.date < right.data.date ? 1 : -1);
+	}, function (content) { return content.data.author});
+	
+	pahub.api.content.addSortMethod(false, "Last Updated", function(left, right) {
+		var leftDate = new Date(left.data.date);
+		var rightDate = new Date(right.data.date);
+		if (left.data.date == undefined) {
+			return pahub.api.content.getSortAscending(false) ? 1 : -1;
 		}
-	});
+		if (right.data.date == undefined) {
+			return pahub.api.content.getSortAscending(false) ? -1 : 1;
+		}
+		if (pahub.api.content.getSortAscending(false) == true ) {
+			return leftDate == rightDate ? 0 : (leftDate < rightDate ? -1 : 1);
+		} else {
+			return leftDate == rightDate ? 0 : (leftDate < rightDate ? 1 : -1);
+		}
+	}, group_func_last_updated);
+	
+	pahub.api.content.addSortMethod(true, "Last Updated", function(left, right) {
+		var leftDate = new Date(left.data.date);
+		var rightDate = new Date(right.data.date);
+		if (left.data.date == undefined) {
+			return pahub.api.content.getSortAscending(true) ? 1 : -1;
+		}
+		if (right.data.date == undefined) {
+			return pahub.api.content.getSortAscending(true) ? -1 : 1;
+		}
+		if (pahub.api.content.getSortAscending(true) == true ) {
+			return leftDate == rightDate ? 0 : (leftDate < rightDate ? 1 : -1);
+		} else {
+			return leftDate == rightDate ? 0 : (leftDate < rightDate ? -1 : 1);
+		}
+	}, group_func_last_updated);
+	
 	pahub.api.content.addSortMethod(true, "Content type", function(left, right) {
 		var left_store_name = left.store.data.content_name;
 		var right_store_name = right.store.data.content_name;
@@ -1024,7 +1282,8 @@ function load_plugin_content(data, folder) {
 		} else {
 			return left_store_name == right_store_name ? 0 : (left_store_name < right_store_name ? 1 : -1);
 		}
-	});
+	}, group_func_content_type);
+	
 	pahub.api.content.addSortMethod(false, "Content type", function(left, right) {
 		var left_store_name = left.store.data.content_name;
 		var right_store_name = right.store.data.content_name;
@@ -1033,14 +1292,15 @@ function load_plugin_content(data, folder) {
 		} else {
 			return left_store_name == right_store_name ? 0 : (left_store_name < right_store_name ? 1 : -1);
 		}
-	});
+	}, group_func_content_type);
 	
 	pahub.api.section.addSection("section-content", "CONTENT HUB", path.join(folder, "contenthub.png"), "sections", 20);
+	pahub.api.section.addSection("section-content-download", "DOWNLOADS", path.join(folder, "download.png"), "header", 20);
 	pahub.api.tab.addTab("section-content", "spotlight-content", "SPOTLIGHT", "", 10);
 	pahub.api.tab.addTab("section-content", "installed-content", "LOCAL CONTENT", "", 20);
 	pahub.api.tab.addTab("section-content", "find-content", "FIND CONTENT", "", 30);
 	pahub.api.tab.addTab("section-content", "upload-content", "UPLOAD CONTENT", "", 40);
-	pahub.api.tab.addTab("section-content", "active-downloads", "", "assets/img/test/download.png", 50);
+	pahub.api.tab.addTab("section-content-download", "active-downloads", "", "", 50);
 	
 	pahub.api.resource.loadResource(path.join(folder, "spotlight-content.html"), "get", {name: "HTML: spotlight-content", mode: "async", success: function(resource) {
 		pahub.api.tab.setTabContent("section-content", "spotlight-content", resource.data);
@@ -1056,8 +1316,21 @@ function load_plugin_content(data, folder) {
 	}});
 	
 	pahub.api.resource.loadResource(path.join(folder, "active-downloads.html"), "get", {name: "HTML: active-downloads", mode: "async", success: function(resource) {
-		pahub.api.tab.setTabContent("section-content", "active-downloads", resource.data);
+		pahub.api.tab.setTabContent("section-content-download", "active-downloads", resource.data);
 	}});
+	
+	pahub.api.setting.addSettingGroup("contenthub", "Content Hub Settings [Debug]");
+	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_sort", model.content.local_content_sort, "text", "text", "Name", "local_content_sort", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_group", model.content.local_content_group, "boolean", "checkbox", true, "local_content_group", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_sort_asc", model.content.local_content_sort_asc, "boolean", "checkbox", true, "local_content_sort_asc", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_sort", model.content.online_content_sort, "text", "text", "Name", "online_content_sort", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_group", model.content.online_content_group, "boolean", "checkbox", true, "online_content_group", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_sort_asc", model.content.online_content_sort_asc, "boolean", "checkbox", true, "online_content_sort_asc", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.content_spotlight_recent_count", model.content.content_spotlight_recent_count, "integer", "text", 5, "content_spotlight_recent_count", null, {});
+	
+	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_filter_view", model.content.local_content_filter_view, "boolean", "checkbox", false, "local_content_filter_view", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_filter_view", model.content.online_content_filter_view, "boolean", "checkbox", false, "online_content_filter_view", null, {});
+	
 }
 
 function unload_plugin_content(data) {}
