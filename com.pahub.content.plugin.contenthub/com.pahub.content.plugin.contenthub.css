@@ -287,6 +287,22 @@ img.content-image {
 	clear: none;
 }
 
+.content-detail .content-downloads {
+	float: right;
+}
+
+.content-detail .content-downloads-value {
+	margin-left: 4px;
+}
+
+.content-detail .content-new {
+	color: #008CFF;
+	margin-left: 4px;
+	margin-top: 5px;
+	font-style: italic;
+	font-size: 11px;
+}
+
 .content-detail .content-type {
 	font-size: 12px;
 	clear: left;
@@ -347,6 +363,19 @@ img.content-image {
 /* Content Spotlight */
 /*********************/
 
+.content-spotlight-stats {
+	padding: 5px;
+}
+
+.stat-label {
+	width: 220px;
+	display: inline-block;
+	color: #F9F9F9;
+}
+.stat-value {
+	display: inline-block;
+}
+
 .content-spotlight-list  {
 	display: inline-block;
 	width: auto;
@@ -369,6 +398,14 @@ img.content-image {
 }
 
 .content-spotlight-list-item .content-date {
+	position: relative;
+	display: inline;
+	font-size: 12px;
+	margin-right: 4px;
+	color: #CC8800;
+}
+
+.content-spotlight-list-item .content-downloads {
 	position: relative;
 	display: inline;
 	font-size: 12px;

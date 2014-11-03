@@ -5,7 +5,14 @@
 			<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
 		</div>
 		<div class='content-detail-item'>
-			<div class='content-name' data-bind='text: data.display_name'></div>
+			<div class='content-downloads'>
+				<div><img src="assets/img/download.png"/></div>
+				<div class='content-downloads-value' data-bind='text: downloads()'></div>
+			</div>
+			<div class='content-name' data-bind='text: display_name()'></div>
+			<!-- ko if: newly_updated() -->
+				<div class='content-new' data-bind='text: "NEW!"'></div>
+			<!-- /ko -->
 			<div class='content-type' data-bind='text: store.data.content_name, style: {color: "rgba(" + $data.store.data.content_colour[0] + "," + $data.store.data.content_colour[1] + "," + $data.store.data.content_colour[2] + ",1.0)"}'></div>
 			<div class='content-author' data-bind='text: "by " + data.author'></div>
 			<div class='content-version' data-bind='text: (local_content() ? "Current version: v" + local_content().version() + ", New version" : "Version") + ": v" + version()'></div>
@@ -30,7 +37,7 @@
 					<!-- ko if: local_content() && semver.gt(version(), local_content().version()) -->
 						<div class="text-button-update text-button" data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Update</div>
 					<!-- /ko -->	
-					<!-- ko ifnot: local_content() && semver.gt(version(), local_content().version()) -->
+					<!-- ko ifnot: local_content() && semver.gt(version(), local_content().version()) || local_content() -->
 						<div class="text-button" data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Install</div>
 					<!-- /ko -->
 				<!-- /ko -->
@@ -59,6 +66,9 @@
 	<div data-bind="css: {'selected-tab': model.content.content_spotlight_tab() == 'update'}, click: function(){  model.content.content_spotlight_tab('update') }" class="tab">
 		<span class="tab-display-name">Updates Available</span> 
 	</div>
+	<div data-bind="css: {'selected-tab': model.content.content_spotlight_tab() == 'stats'}, click: function(){  model.content.content_spotlight_tab('stats') }" class="tab">
+		<span class="tab-display-name">Stats</span> 
+	</div>
 </div>
 
 <!-- ko if: model.content.content_spotlight_tab() == 'recent' -->
@@ -67,27 +77,52 @@
 			<!-- ko foreach: model.content.content_spotlight_recent() -->
 				<div class="content-spotlight-list-item" data-bind="click: function() { model.content.spotlight_content(pahub.api.content.getContentItem(false, data.content_id)) }">
 					<div class='content-name' data-bind='text: data.display_name'></div>
-					<div class='content-date' data-bind='text: "[" + data.date + "] "'></div>
+					<div class='content-date' data-bind='text: "Last updated " + data.date'></div>
 					<div class='content-type' data-bind='text: store.data.content_name, style: {color: "rgba(" + $data.store.data.content_colour[0] + "," + $data.store.data.content_colour[1] + "," + $data.store.data.content_colour[2] + ",1.0)"}'></div>
 				</div>
 			<!-- /ko -->
-			<div class="text-button" data-bind='click: function() {if (model.content.content_spotlight_recent_count() < model.content.online_content_items().length) {model.content.content_spotlight_recent_count(model.content.content_spotlight_recent_count() + 1)}}'>Show More</div>
-			<div class="text-button" data-bind='click: function() {if (model.content.content_spotlight_recent_count() > 1) {model.content.content_spotlight_recent_count(model.content.content_spotlight_recent_count() - 1)}}'>Show Less</div>
+			<div class="text-button" data-bind='click: function() {if (model.content.content_spotlight_item_count() < model.content.online_content_items().length) {model.content.content_spotlight_item_count(model.content.content_spotlight_item_count() + 1)}}'>Show More</div>
+			<div class="text-button" data-bind='click: function() {if (model.content.content_spotlight_item_count() > 1) {model.content.content_spotlight_item_count(model.content.content_spotlight_item_count() - 1)}}'>Show Less</div>
 		</div>
 	</div>
 <!-- /ko -->
-
+<!-- ko if: model.content.content_spotlight_tab() == 'downloads' -->
+	<div class='spotlight-tab-container'>
+		<div class="content-spotlight-list">
+			<!-- ko foreach: model.content.content_spotlight_downloaded() -->
+				<div class="content-spotlight-list-item" data-bind="click: function() { model.content.spotlight_content(pahub.api.content.getContentItem(false, data.content_id)) }">
+					<div class='content-name' data-bind='text: data.display_name'></div>
+					<div class='content-downloads' data-bind='text: $data.downloads() + " downloads"'></div>
+					<div class='content-type' data-bind='text: store.data.content_name, style: {color: "rgba(" + $data.store.data.content_colour[0] + "," + $data.store.data.content_colour[1] + "," + $data.store.data.content_colour[2] + ",1.0)"}'></div>
+				</div>
+			<!-- /ko -->
+			<div class="text-button" data-bind='click: function() {if (model.content.content_spotlight_item_count() < model.content.online_content_items().length) {model.content.content_spotlight_item_count(model.content.content_spotlight_item_count() + 1)}}'>Show More</div>
+			<div class="text-button" data-bind='click: function() {if (model.content.content_spotlight_item_count() > 1) {model.content.content_spotlight_item_count(model.content.content_spotlight_item_count() - 1)}}'>Show Less</div>
+		</div>
+	</div>
+<!-- /ko -->
 <!-- ko if: model.content.content_spotlight_tab() == 'update' -->
 	<div class='spotlight-tab-container'>
 		<div class="content-spotlight-list">
-				<!-- ko foreach: model.content.online_content_items --> 
-					<!-- ko if: local_content() && version() != local_content().version() -->
-							<div class="content-spotlight-list-item" data-bind="click: function() { model.content.spotlight_content(pahub.api.content.getContentItem(false, data.content_id)) }">
-								<div class='content-name' data-bind='text: data.display_name'></div>
-								<div class='content-type' data-bind='text: store.data.content_name, style: {color: "rgba(" + $data.store.data.content_colour[0] + "," + $data.store.data.content_colour[1] + "," + $data.store.data.content_colour[2] + ",1.0)"}'></div>
-							</div>
-					<!-- /ko -->
+			<!-- ko foreach: model.content.online_content_items --> 
+				<!-- ko if: local_content() && version() != local_content().version() -->
+						<div class="content-spotlight-list-item" data-bind="click: function() { model.content.spotlight_content(pahub.api.content.getContentItem(false, data.content_id)) }">
+							<div class='content-name' data-bind='text: data.display_name'></div>
+							<div class='content-type' data-bind='text: store.data.content_name, style: {color: "rgba(" + $data.store.data.content_colour[0] + "," + $data.store.data.content_colour[1] + "," + $data.store.data.content_colour[2] + ",1.0)"}'></div>
+						</div>
 				<!-- /ko -->
+			<!-- /ko -->
+		</div>
+	</div>
+<!-- /ko -->
+<!-- ko if: model.content.content_spotlight_tab() == 'stats' -->
+	<div class='spotlight-tab-container'>
+		<div class="content-spotlight-stats">
+			<div class="stat-label" data-bind="text: 'Available Content Items: '"></div><div class="stat-value" data-bind="text: pahub.api.content.getContentItems(false).length"></div><br/>
+			<div class="stat-label" data-bind="text: 'Installed Content Items: '"></div><div class="stat-value" data-bind="text: pahub.api.content.getContentItems(true).length"></div><br/>
+			<div class="stat-label" data-bind="text: 'Total Downloads: '"></div><div class="stat-value" data-bind="text: pahub.api.content.getTotalDownloads()"></div><br/>
+			<div class="stat-label" data-bind="text: 'PTE Build: '"></div><div class="stat-value" data-bind="text: model.pte_build()"></div><br/>
+			<div class="stat-label" data-bind="text: 'Stable Build: '"></div><div class="stat-value" data-bind="text: model.stable_build() + (model.steam() ? ' (Steam)' : '')"></div><br/>
 		</div>
 	</div>
 <!-- /ko -->

@@ -107,7 +107,7 @@
 						<span class='content-online-version' data-bind='text: (online_content() ? (version() != online_content().version() ? "(v" + online_content().version() + ")" : "") : "")'></span>
 					</div>
 					<div class='content-checkbox'>
-						<input type='checkbox' data-bind='click: function(data, event) { model.content.showContentInformation(true, $data.content_id); pahub.api.content.setContentEnabled($data, !$data.data.enabled()); if (model.isCorePlugin($data.content_id) == true) {event.stopImmediatePropagation(); return false;}; return true;}, checked: data.enabled'></input><label></label>
+						<input type='checkbox' data-bind='click: function(data, event) { model.content.showContentInformation(true, $data.content_id); if (pahub.api.content.setContentEnabled($data, !$data.data.enabled()) == false) {event.stopImmediatePropagation(); return false;}; return true;}, checked: data.enabled'></input><label></label>
 					</div>	
 				</div>
 			</div>

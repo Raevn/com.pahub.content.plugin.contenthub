@@ -99,13 +99,13 @@
 		<div class='content-item' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, css: {'content-update-available': local_content() ? version() != local_content().version() : false}">
 			<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
 			<div class='content-item-cont' data-bind="click: function() { model.content.showContentInformation(false, $data.content_id) }">
-				<div class='content-name' data-bind='text: data.display_name'></div>
+				<div class='content-name' data-bind='text: display_name()'></div>
 				<div class='content-author' data-bind='visible: , text: data.author'></div>
 				<div class='content-version-info'>
 					<span class='content-online-version' data-bind='text: "v" + version()'></span>
 					<span class='content-version' data-bind='text: (local_content() ? (version() != local_content().version() ? "(v" + local_content().version() + ")" : "") : "")'></span>
 				</div>
-				<div class='content-download'><img src="assets/img/test/download.png" data-bind="click: function() {pahub.api.content.installContentItem(content_id)}"></div>	
+				<div class='content-download'><img src="assets/img/download.png" data-bind="click: function() {pahub.api.content.installContentItem(content_id)}"></div>	
 			</div>
 		</div>
 	<!-- /ko -->

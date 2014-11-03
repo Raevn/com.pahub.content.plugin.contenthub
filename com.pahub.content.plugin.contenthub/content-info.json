@@ -4,8 +4,8 @@
     "display_name": "Content Hub",
     "description": "Core Plugin for managing content and content stores",
     "author": "Raevn",
-    "version": "0.1.0",
-    "date": "2014/11/01",
+    "version": "0.2.0",
+    "date": "2014/11/04",
     "resources": [
         "com.pahub.content.plugin.contenthub.js",
         "com.pahub.content.plugin.contenthub.css"
@@ -14,7 +14,7 @@
     "unload_func": "unload_plugin_content",
     "enabled": true,
     "required": {
-        "com.pahub": ">=0.1.0",
+        "com.pahub": ">=0.2.0",
         "com.pahub.content.plugin.settings": ">=0.1.0"
     }
 }

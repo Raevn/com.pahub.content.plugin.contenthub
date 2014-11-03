@@ -10,10 +10,13 @@ function load_plugin_content(data, folder) {
 		removeContentItem:  function(local, content_id) { model.content.removeContentItem(local, content_id); },
 		removeContentStore: function(store_id) { model.content.removeContentStore(store_id);},
 		
+		getTotalDownloads: function() { return model.content.getTotalDownloads(); },
+		
 		fixVersionString: function(version) { return model.content.fixVersionString(version);},
 		
 		//install, update, delete etc.
 		installContentItem: function(content_id) { model.content.installContentItem(content_id); },
+		verifyContentDependencies: function() { model.content.verifyContentDependencies(); },
 		
 		contentStoreExists: function(store_id) { return model.content.contentStoreExists(store_id); },
 		contentItemExists: function(local, content_id) { return model.content.contentItemExists(local, content_id); },
@@ -24,9 +27,9 @@ function load_plugin_content(data, folder) {
 		contentDependentsDisabled: function(local, dependents) { return model.content.contentDependentsDisabled(local, dependents); },
 		
 		//getContentEnabled
-		setContentEnabled: function(content, enabled) { model.content.setContentEnabled(content, enabled); }, //change to content_id
-		enableContent: function(content, enabled) { model.content.enableContent(content); }, //change to content_id
-		disableContent: function(content, enabled) { model.content.disableContent(content); }, //change to content_id
+		setContentEnabled: function(content, enabled) { return model.content.setContentEnabled(content, enabled); }, //change to content_id
+		enableContent: function(content, enabled) { return model.content.enableContent(content); }, //change to content_id
+		disableContent: function(content, enabled) { return model.content.disableContent(content); }, //change to content_id
 		
 		getContentStores: function(local) { return model.content.getContentStores()();},
 		getContentStore: function(store_id) { return model.content.getContentStore(store_id); },
@@ -230,7 +233,10 @@ function load_plugin_content(data, folder) {
 										*/
 										"<div class='content-actions'>" +
 										"</div>" +
-										"<div class='content-name' data-bind='text: data.display_name'></div>" +
+										"<div class='content-name' data-bind='text: display_name()'></div>" +
+										"<!-- ko if: newly_updated() -->" +
+											"<div class='content-new' data-bind='text: \"NEW!\"'></div>" +
+										"<!-- /ko -->" +
 										"<div class='content-type' data-bind='text: store.data.content_name, style: {color: \"rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'></div>" +
 										"<div class='content-author' data-bind='text: \"by \" + data.author'></div>" +
 										"<div class='content-version' data-bind='text: \"Version: v\" + version()'></div>" +
@@ -291,7 +297,14 @@ function load_plugin_content(data, folder) {
 											"<input type='checkbox' data-bind='checked: data.enabled, click: function() { pahub.api.content.setContentEnabled($data, $data.data.enabled()); return true}'></input><label></label>" +
 										"</div>	" +
 										*/
-										"<div class='content-name' data-bind='text: data.display_name'></div>" +
+										"<div class='content-downloads'>" +
+											"<div><img src=\"assets/img/download.png\"/></div>" +
+											"<div class='content-downloads-value' data-bind='text: downloads()'></div>" +
+										"</div>" +
+										"<div class='content-name' data-bind='text: display_name()'></div>" +
+										"<!-- ko if: newly_updated() -->" +
+											"<div class='content-new' data-bind='text: \"NEW!\"'></div>" +
+										"<!-- /ko -->" +
 										"<div class='content-type' data-bind='text: store.data.content_name, style: {color: \"rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'></div>" +
 										"<div class='content-author' data-bind='text: \"by \" + data.author'></div>" +
 										"<div class='content-version' data-bind='text: \"Version: v\" + version()'></div>" +
@@ -370,7 +383,7 @@ function load_plugin_content(data, folder) {
 					var item = {
 						local: local, //ko.mapping
 						content_id: content_id, //ko.mapping
-						display_name: display_name, //ko.mapping
+						display_name: ko.observable(display_name), //ko.mapping //is this needed?
 						store_id: store_id, //ko.mapping
 						store: model.content.getContentStore(store_id), //ko.mapping
 						icon: ko.observable("assets/img/content.png"),
@@ -379,7 +392,17 @@ function load_plugin_content(data, folder) {
 						local_content: ko.observable(),
 						required_array: ko.observableArray(),
 						version: ko.observable(pahub.api.content.fixVersionString(data.version)),
+						downloads: ko.observable(0),
+						newly_updated: ko.observable(false),
 						data: data //ko.mapping
+					}
+					
+					if (data.hasOwnProperty("date") == true) {
+						var now = new Date();
+						var contentDate = new Date(item.data.date);
+						if ((now - contentDate)/(1000*60*60*24) <= 7) {
+							item.newly_updated(true);
+						}
 					}
 					
 					if (data.hasOwnProperty("required") == true) {
@@ -500,35 +523,44 @@ function load_plugin_content(data, folder) {
 				var content = pahub.api.content.getContentItem(false, content_id);
 				//check for dependencies
 				//check no dependencies are core plugins
+		
+				var dependenciesOk = true;
 				
-				if (content.data.hasOwnProperty("url") == true) {
-				
-					pahub.api.resource.loadResource(content.data.url, "save", {
-						name: content.display_name,
-						saveas: content.content_id + ".zip",
-						success: function(item) {
-							pahub.api.content.removeContentItem(true, content.content_id);
-							
-							if (content.store.data.hasOwnProperty("custom_install_content_func") == true) {
-								if (typeof window[content.store.data.custom_install_content_func] === 'function') {
-									window[content.store.data.custom_install_content_func](content_id);
-								}	
-							} else {
-								extractZip(path.join(constant.PAHUB_CACHE_DIR, content.content_id + ".zip"), 
-									content.content_id, 
-									path.join(constant.PA_DATA_DIR, content.store.data.local_content_path), 
-									getZippedFilePath(path.join(constant.PAHUB_CACHE_DIR, content.content_id + ".zip"), "content-info.json")
-								);
+				if (content.data.hasOwnProperty("required") == true) {
+					dependenciesOk = pahub.api.content.contentDependenciesExist(true, content.data.required, false);
+				}
+				if (dependenciesOk == true) {
+					if (content.data.hasOwnProperty("url") == true) {
+					
+						pahub.api.resource.loadResource(content.data.url, "save", {
+							name: content.display_name(),
+							saveas: content.content_id + ".zip",
+							success: function(item) {
+								pahub.api.content.removeContentItem(true, content.content_id);
+								
+								if (content.store.data.hasOwnProperty("custom_install_content_func") == true) {
+									if (typeof window[content.store.data.custom_install_content_func] === 'function') {
+										window[content.store.data.custom_install_content_func](content_id);
+									}	
+								} else {
+									extractZip(path.join(constant.PAHUB_CACHE_DIR, content.content_id + ".zip"), 
+										content.content_id, 
+										path.join(constant.PA_DATA_DIR, content.store.data.local_content_path), 
+										getZippedFilePath(path.join(constant.PAHUB_CACHE_DIR, content.content_id + ".zip"), "content-info.json")
+									);
+								}
+								if (model.isCorePlugin(content_id) == true) {
+									alert("PA Hub will now restart to complete installation of a Core Plugin");
+									restart();
+								} else {
+									pahub.api.content.refreshLocalContent(content.store_id);
+								}
+								//switch to local content tab?
 							}
-							if (model.isCorePlugin(content_id) == true) {
-								alert("PA Hub will now restart to complete installation of a Core Plugin");
-								restart();
-							} else {
-								pahub.api.content.refreshLocalContent(content.store_id);
-							}
-							//switch to local content tab?
-						}
-					});
+						});
+					}
+				} else {
+					alert("Unable to install " + content.display_name() + ", required dependencies are missing");
 				}
 			}
 		},
@@ -584,7 +616,6 @@ function load_plugin_content(data, folder) {
 			}
 		},
 		
-		//don't need "content" param?
 		contentDependenciesExist: function(local, dependencies, areEnabled) {
 		
 			//check content exists
@@ -620,9 +651,9 @@ function load_plugin_content(data, folder) {
 		//change to content_id, enabled?
 		setContentEnabled: function (content_item, enabled) {
 			if (enabled == true) {
-				model.content.enableContent(content_item);
+				return model.content.enableContent(content_item);
 			} else {
-				model.content.disableContent(content_item);
+				return model.content.disableContent(content_item);
 			}
 		},
 		
@@ -654,10 +685,12 @@ function load_plugin_content(data, folder) {
 				} else {
 					model.content.writeContentItem(content_item);
 				}
+				return true;
 			} else {
 				var store = pahub.api.content.getContentStore(content_item.store_id);
 				pahub.api.log.addLogMessage("warn", "Cannot enable " + store.data.content_name + " '" + content_item.content_id + "': Required dependency not met");
 				pahub.api.content.disableContent(content_item);
+				return false;
 			}
 		},
 		
@@ -687,9 +720,22 @@ function load_plugin_content(data, folder) {
 					} else {
 						model.content.writeContentItem(content_item);
 					}
+					return true;
 				} else {
 					var store = pahub.api.content.getContentStore(content_item.store_id);
 					pahub.api.log.addLogMessage("warn", "Cannot disable " + store.data.content_name + " '" + content_item.content_id + "': Dependent items are not disabled");
+					return false;
+				}
+			} else {
+				return false;
+			}
+		},
+		
+		verifyContentDependencies: function() {
+			var contentItems = pahub.api.content.getContentItems(true);
+			for (var i = 0; i < contentItems.length; i++) {
+				if (contentItems[i].data.hasOwnProperty("required") == true && pahub.api.content.contentDependenciesExist(true, contentItems[i].data.required, true) == false) {
+					pahub.api.content.disableContent(contentItems[i]);
 				}
 			}
 		},
@@ -1148,7 +1194,7 @@ function load_plugin_content(data, folder) {
 		}),
 		
 		content_spotlight_tab: ko.observable('recent'),
-		content_spotlight_recent_count: ko.observable(5),
+		content_spotlight_item_count: ko.observable(5),
 		spotlight_content: ko.observable(),
 		content_spotlight_recent: ko.computed({
 			read: function() {
@@ -1165,12 +1211,36 @@ function load_plugin_content(data, folder) {
 				}
 			
 				var sorted_content = model.content.getContentItems(false).sorted_list(sort_func)
-				var filtered_content = sorted_content().splice(0,model.content.content_spotlight_recent_count());
+				var filtered_content = sorted_content().splice(0,model.content.content_spotlight_item_count());
 				//if (filtered_content.indexOf(model.content.spotlight_content()) == -1) {
 				if (model.content.spotlight_content() == null ) {
 					model.content.spotlight_content(filtered_content[0]);
 				}
 				return filtered_content
+			},
+			deferEvaluation: true
+		}),
+		content_spotlight_downloaded: ko.computed({
+			read: function() {
+				var sort_func = function(left, right) {
+					return left.downloads() == right.downloads() ? 0 : (left.downloads() < right.downloads() ? 1 : -1);
+				}
+			
+				var sorted_content = model.content.getContentItems(false).sorted_list(sort_func)
+				var filtered_content = sorted_content().splice(0, model.content.content_spotlight_item_count());
+				return filtered_content
+			},
+			deferEvaluation: true
+		}),
+		
+		getTotalDownloads: ko.computed({
+			read: function() {
+				var	total = 0;
+				var content = pahub.api.content.getContentItems(false);
+				for (var i = 0; i < content.length; i++) {
+					total += content[i].downloads();
+				}
+				return total;
 			},
 			deferEvaluation: true
 		})
@@ -1180,8 +1250,8 @@ function load_plugin_content(data, folder) {
 	pahub.api.content.addFilterOption(false, "Content Type", "match", "store_id", "set", model.content.content_store_names, model.content.content_store_ids);
 	
 	var group_func_first_letter = function (content) {
-		if (content.display_name.length > 0) {
-			return content.display_name.charAt(0);
+		if (content.display_name().length > 0) {
+			return content.display_name().charAt(0);
 		} else {
 			return "";
 		}
@@ -1208,6 +1278,28 @@ function load_plugin_content(data, folder) {
 			return "Updated over a year ago";
 		}
 		return "Unknown"
+	}
+	
+	var group_func_downloads = function (content) { 
+		if (content.downloads() >= 10000) {
+			return "10000 +";
+		}
+		if (content.downloads() >= 5000) {
+			return "5000 - 9999";
+		}
+		if (content.downloads() >= 1000) {
+			return "1000 - 4999";
+		}
+		if (content.downloads() >= 500) {
+			return "500 - 999";
+		}
+		if (content.downloads() >= 100) {
+			return "100 - 499";
+		}
+		if (content.downloads() > 0) {
+			return "1 - 99";
+		}
+		return "0";
 	}
 	
 	pahub.api.content.addSortMethod(true, "Name", function(left, right) {
@@ -1294,6 +1386,14 @@ function load_plugin_content(data, folder) {
 		}
 	}, group_func_content_type);
 	
+	pahub.api.content.addSortMethod(false, "Downloads", function(left, right) {
+		if (pahub.api.content.getSortAscending(false) == true ) {
+			return left.downloads() == right.downloads() ? 0 : (left.downloads() < right.downloads() ? -1 : 1);
+		} else {
+			return left.downloads() == right.downloads() ? 0 : (left.downloads() < right.downloads() ? 1 : -1);
+		}
+	}, group_func_downloads);
+	
 	pahub.api.section.addSection("section-content", "CONTENT HUB", path.join(folder, "contenthub.png"), "sections", 20);
 	pahub.api.section.addSection("section-content-download", "DOWNLOADS", path.join(folder, "download.png"), "header", 20);
 	pahub.api.tab.addTab("section-content", "spotlight-content", "SPOTLIGHT", "", 10);
@@ -1326,7 +1426,7 @@ function load_plugin_content(data, folder) {
 	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_sort", model.content.online_content_sort, "text", "text", "Name", "online_content_sort", null, {});
 	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_group", model.content.online_content_group, "boolean", "checkbox", true, "online_content_group", null, {});
 	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_sort_asc", model.content.online_content_sort_asc, "boolean", "checkbox", true, "online_content_sort_asc", null, {});
-	pahub.api.setting.addSetting("contenthub", "plugin.content.content_spotlight_recent_count", model.content.content_spotlight_recent_count, "integer", "text", 5, "content_spotlight_recent_count", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.content_spotlight_item_count", model.content.content_spotlight_item_count, "integer", "text", 5, "content_spotlight_item_count", null, {});
 	
 	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_filter_view", model.content.local_content_filter_view, "boolean", "checkbox", false, "local_content_filter_view", null, {});
 	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_filter_view", model.content.online_content_filter_view, "boolean", "checkbox", false, "online_content_filter_view", null, {});
