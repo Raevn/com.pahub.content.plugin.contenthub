@@ -47,7 +47,7 @@
 	opacity: 0.45;
 }
 
-.content-item:hover {
+.content-item.content-selected, .content-item:hover {
 	border: 2px solid #F9F9F9 !important;
 	background-color: #515151;
 }
@@ -86,7 +86,7 @@
 }
 
 
-.content-disabled.content-item:hover .content-author {
+.content-disabled.content-item.content-selected  .content-author, .content-disabled.content-item:hover .content-author {
 	color: #888888;
 }
 
@@ -251,7 +251,7 @@ img.content-image {
 	width: 140px;
 }
 
-.content-item:hover .content-author {
+.content-item.content-selected .content-author, .content-item:hover .content-author {
 	padding: 5px;
 	display: block !important;
 	font-style: italic;
@@ -306,11 +306,10 @@ img.content-image {
 .content-detail .content-type {
 	font-size: 12px;
 	clear: left;
+	padding-right: 4px;
 }
 
-.content-detail .content-author {
-	padding-left: 4px;
-}
+.content-detail .content-author {}
 
 .content-detail .content-version {
 	clear: left;
@@ -399,15 +398,21 @@ img.content-image {
 
 .content-spotlight-list-item .content-date {
 	position: relative;
-	display: inline;
+	display: block;
 	font-size: 12px;
 	margin-right: 4px;
 	color: #CC8800;
 }
 
-.content-spotlight-list-item .content-downloads {
+.content-spotlight-list-item  .content-author {
 	position: relative;
 	display: inline;
+	font-size: 12px;
+}
+
+.content-spotlight-list-item .content-downloads {
+	position: relative;
+	display: block;
 	font-size: 12px;
 	margin-right: 4px;
 	color: #CC8800;

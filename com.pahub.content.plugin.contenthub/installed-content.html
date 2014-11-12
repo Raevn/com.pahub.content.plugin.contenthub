@@ -97,18 +97,20 @@
 			<!-- ko if: model.content.local_content_group() && ($index() == 0 || model.content.getContentItemGroup(true, model.content.local_content_items.filtered_list(model.content.local_content_filters())()[$index() - 1].content_id) != model.content.getContentItemGroup(true, $data.content_id)) -->
 				<div class="heading2" style="width: 100%" data-bind="text: model.content.getContentItemGroup(true, $data.content_id)"></div>
 			<!-- /ko -->
-			<div class='content-item' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',' + (data.enabled() ? 1.0 : 0.25) + ')'}, css: {'content-disabled': !data.enabled(), 'content-update-available': online_content() ? version() != online_content().version() : false}">
+			<div class='content-item' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',' + (data.enabled() ? 1.0 : 0.25) + ')'}, css: {'content-disabled': !data.enabled(), 'content-update-available': online_content() ? version() != online_content().version() : false, 'content-selected': selected()}">
 				<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
-				<div class='content-item-cont' data-bind="click: function() {model.content.showContentInformation(true, $data.content_id)}">
+				<div class='content-item-cont' data-bind="click: function(data, event) {if (event.ctrlKey) { model.content.updateSelection(true, $data.content_id) } else { model.content.setSelection(true, [$data.content_id]) }}">
 					<div class='content-name' data-bind='text: data.display_name'></div>
 					<div class='content-author' data-bind='text: data.author'></div>
 					<div class='content-version-info'>
 						<span class='content-version' data-bind='text: "v" + version()'></span>
 						<span class='content-online-version' data-bind='text: (online_content() ? (version() != online_content().version() ? "(v" + online_content().version() + ")" : "") : "")'></span>
 					</div>
-					<div class='content-checkbox'>
-						<input type='checkbox' data-bind='click: function(data, event) { model.content.showContentInformation(true, $data.content_id); if (pahub.api.content.setContentEnabled($data, !$data.data.enabled()) == false) {event.stopImmediatePropagation(); return false;}; return true;}, checked: data.enabled'></input><label></label>
-					</div>	
+					<!-- ko if: model.isCorePlugin(data.content_id) == false -->
+						<div class='content-checkbox'>
+							<input type='checkbox' data-bind='click: function(data, event) { model.content.showContentInformation(true, $data.content_id); if (pahub.api.content.setContentEnabled($data, !$data.data.enabled()) == false) {event.stopImmediatePropagation(); return false;}; return true;}, checked: data.enabled'></input><label></label>
+						</div>
+					<!-- /ko -->
 				</div>
 			</div>
 		<!-- /ko -->

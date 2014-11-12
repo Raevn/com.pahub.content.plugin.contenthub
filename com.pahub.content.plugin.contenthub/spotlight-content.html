@@ -30,6 +30,10 @@
 				<!-- /ko -->
 			<!-- /ko -->
 			<div class="content-actions">
+				<!-- FIXME: Don't include the logic here, add a function -->
+				<!-- ko if: pahub.api.content.contentItemExists(true, "com.pahub.content.plugin.community") == true && pahub.api.content.getContentItem(true, "com.pahub.content.plugin.community").data.enabled() == true -->
+					<div class="text-button" data-bind='click: function() {pahub.api.news.setFilter(content_id); pahub.api.section.setActiveSection("section-community"); pahub.api.tab.setActiveTab("news"); model.news.show_add(false)}'>News</div>
+				<!-- /ko -->
 				<!-- ko if: data.forum -->
 					<div class="text-button" data-bind='click: function() {shell.openExternal(data.forum)}'>Forum</div>
 				<!-- /ko -->
@@ -77,8 +81,9 @@
 			<!-- ko foreach: model.content.content_spotlight_recent() -->
 				<div class="content-spotlight-list-item" data-bind="click: function() { model.content.spotlight_content(pahub.api.content.getContentItem(false, data.content_id)) }">
 					<div class='content-name' data-bind='text: data.display_name'></div>
-					<div class='content-date' data-bind='text: "Last updated " + data.date'></div>
 					<div class='content-type' data-bind='text: store.data.content_name, style: {color: "rgba(" + $data.store.data.content_colour[0] + "," + $data.store.data.content_colour[1] + "," + $data.store.data.content_colour[2] + ",1.0)"}'></div>
+					<div class='content-author' data-bind='text: "by " + data.author'></div>
+					<div class='content-date' data-bind='text: "Last updated " + data.date'></div>
 				</div>
 			<!-- /ko -->
 			<div class="text-button" data-bind='click: function() {if (model.content.content_spotlight_item_count() < model.content.online_content_items().length) {model.content.content_spotlight_item_count(model.content.content_spotlight_item_count() + 1)}}'>Show More</div>
@@ -92,8 +97,9 @@
 			<!-- ko foreach: model.content.content_spotlight_downloaded() -->
 				<div class="content-spotlight-list-item" data-bind="click: function() { model.content.spotlight_content(pahub.api.content.getContentItem(false, data.content_id)) }">
 					<div class='content-name' data-bind='text: data.display_name'></div>
-					<div class='content-downloads' data-bind='text: $data.downloads() + " downloads"'></div>
 					<div class='content-type' data-bind='text: store.data.content_name, style: {color: "rgba(" + $data.store.data.content_colour[0] + "," + $data.store.data.content_colour[1] + "," + $data.store.data.content_colour[2] + ",1.0)"}'></div>
+					<div class='content-author' data-bind='text: "by " + data.author'></div>
+					<div class='content-downloads' data-bind='text: $data.downloads() + " downloads"'></div>
 				</div>
 			<!-- /ko -->
 			<div class="text-button" data-bind='click: function() {if (model.content.content_spotlight_item_count() < model.content.online_content_items().length) {model.content.content_spotlight_item_count(model.content.content_spotlight_item_count() + 1)}}'>Show More</div>

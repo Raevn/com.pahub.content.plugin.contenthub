@@ -96,9 +96,9 @@
 		<!-- ko if: model.content.online_content_group() && ($index() == 0 || model.content.getContentItemGroup(false, model.content.online_content_items.filtered_list(model.content.online_content_filters())()[$index() - 1].content_id) != model.content.getContentItemGroup(false, $data.content_id)) -->
 			<div class="heading2" style="" data-bind="text: model.content.getContentItemGroup(false, $data.content_id)"></div>
 		<!-- /ko -->
-		<div class='content-item' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, css: {'content-update-available': local_content() ? version() != local_content().version() : false}">
+		<div class='content-item' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, css: {'content-update-available': local_content() ? version() != local_content().version() : false, 'content-selected': selected()}">
 			<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
-			<div class='content-item-cont' data-bind="click: function() { model.content.showContentInformation(false, $data.content_id) }">
+			<div class='content-item-cont' data-bind="click: function(data, event) {if (event.ctrlKey) { model.content.updateSelection(false, $data.content_id) } else { model.content.setSelection(false, [$data.content_id]) } }">
 				<div class='content-name' data-bind='text: display_name()'></div>
 				<div class='content-author' data-bind='visible: , text: data.author'></div>
 				<div class='content-version-info'>

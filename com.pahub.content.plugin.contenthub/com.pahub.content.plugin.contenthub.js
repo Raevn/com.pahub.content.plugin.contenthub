@@ -1,8 +1,5 @@
 /** CORE-CONTENT **/
 
-//TODO: Bug with content filter counts not updating when selecting additional features
-//      Related to ko.deferred?
-
 function load_plugin_content(data, folder) {
 	pahub.api["content"] = {
 		addContentStore: function(store_id, display_name, data) { model.content.addContentStore(store_id, data); },
@@ -16,7 +13,6 @@ function load_plugin_content(data, folder) {
 		
 		//install, update, delete etc.
 		installContentItem: function(content_id) { model.content.installContentItem(content_id); },
-		verifyContentDependencies: function() { model.content.verifyContentDependencies(); },
 		
 		contentStoreExists: function(store_id) { return model.content.contentStoreExists(store_id); },
 		contentItemExists: function(local, content_id) { return model.content.contentItemExists(local, content_id); },
@@ -25,11 +21,19 @@ function load_plugin_content(data, folder) {
 		getContentItemDependents: function(local, content_id) { return model.content.getContentItemDependents(local, content_id); },
 		contentDependenciesExist: function(local, dependencies, areEnabled) { return model.content.contentDependenciesExist(local, dependencies, areEnabled); },
 		contentDependentsDisabled: function(local, dependents) { return model.content.contentDependentsDisabled(local, dependents); },
+		verifyContentDependencies: function() { model.content.verifyContentDependencies(); },
 		
-		//getContentEnabled
-		setContentEnabled: function(content, enabled) { return model.content.setContentEnabled(content, enabled); }, //change to content_id
-		enableContent: function(content, enabled) { return model.content.enableContent(content); }, //change to content_id
-		disableContent: function(content, enabled) { return model.content.disableContent(content); }, //change to content_id
+		getContentEnabled: function(local, content_id) { return model.content.getContentEnabled(local, content_id); }, //deprecate
+		//getContentItemEnabled: function(local, content_id) { return model.content.getContentItemEnabled(local, content_id); },
+		setContentEnabled: function(content, enabled) { return model.content.setContentEnabled(content, enabled); }, //deprecate
+		enableContent: function(content, enabled) { return model.content.enableContent(content); }, //deprecate
+		disableContent: function(content, enabled) { return model.content.disableContent(content); }, //deprecate
+		//setContentItemEnabled: function(content, enabled) { return model.content.setContentItemEnabled(local, content_id, enabled); },
+		//enableContentItem: function(content, enabled) { return model.content.enableContentItem(local, content_id); },
+		//disableContentItem: function(content, enabled) { return model.content.disableContentItem(local, content_id); },
+		//setContentItemsEnabled: function(content, enabled) { return model.content.setContentItemsEnabled(local, content_id, enabled); },
+		//enableContentItems: function(content, enabled) { return model.content.enableContentItems(local, content_id); },
+		//disableContentItems: function(content, enabled) { return model.content.disableContentItems(local, content_id); },
 		
 		getContentStores: function(local) { return model.content.getContentStores()();},
 		getContentStore: function(store_id) { return model.content.getContentStore(store_id); },
@@ -56,8 +60,11 @@ function load_plugin_content(data, folder) {
 		refreshLocalContent: function(store_id) { model.content.refreshLocalContent(store_id);},
 		refreshAllOnlineContent: function() { model.content.refreshAllOnlineContent();},
 		refreshOnlineContent: function(store_id) { model.content.refreshOnlineContent(store_id);},
+		
+		getSelectedContent: function(local) { model.content.getSelectedContent(local)(); }
 	}
 	
+	//returns a sorted array without modifying the original
 	ko.observableArray.fn.sorted_list = function(sort_method) {
 		return ko.pureComputed(function() {	
 			var all_items = this();
@@ -69,6 +76,7 @@ function load_plugin_content(data, folder) {
 		}, this);
 	}
 	
+	//returns a filtered array without modifying the original
 	ko.observableArray.fn.filtered_list = function(filters) {
 		return ko.pureComputed(function() {	
 			var all_items = this();
@@ -170,8 +178,96 @@ function load_plugin_content(data, folder) {
 		online_content_sort_methods: ko.observableArray(),
 		online_content_group: ko.observable(true),
 		
-		hover_local_content: ko.observable(),
-		hover_online_content: ko.observable(),
+		selected_local_content_data: ko.observable(),
+		selected_online_content_data: ko.observable(),
+		selected_local_content: ko.observableArray(),
+		selected_online_content: ko.observableArray(),
+		
+		getSelectedContent: function(local) {
+			if (local == true) {
+				return model.content.selected_local_content;
+			} else {
+				return model.content.selected_online_content;
+			}
+		},
+					
+		setSelection: function(local, content_ids) {
+			var content_items = pahub.api.content.getContentItems(local);
+			var selected_items = model.content.getSelectedContent(local);
+			
+			selected_items.removeAll();
+			
+			for(var i = 0; i < content_items.length; i++) {
+				content_items[i].selected(false);
+			}
+			
+			for(var i = 0; i < content_ids.length; i++) {
+				var content = pahub.api.content.getContentItem(local, content_ids[i]);
+				
+				if (content_items.indexOf(content) > -1) {
+					content.selected(true);
+					selected_items.push(content);
+				} else {
+					content.selected(false);
+				}
+			}
+			model.content.showContentInformation(local, content_ids[0]);
+		},
+		
+		updateSelection: function(local, content_id) {
+			var selected_items = model.content.getSelectedContent(local);
+			
+			var content = pahub.api.content.getContentItem(local, content_id);
+			if (content.selected() == false) {
+				selected_items.push(content);
+				content.selected(true);
+			} else {
+				selected_items.remove(content);
+				content.selected(false);
+			}
+			
+			model.content.showContentInformation(local, content_id);
+		},
+		
+		getSelectedContentStructure: function(local) {
+			return ko.computed({
+				read: function() {
+					var selectedContent = model.content.getSelectedContent(local)();
+					if (selectedContent.length == 1) {
+						return selectedContent[0];
+					} else {
+						return {
+							local: local,
+							content_id: null,
+							display_name: ko.observable(selectedContent.length + " items selected"),
+							store_id: null,
+							store: null,
+							icon: ko.observable("assets/img/content.png"),
+							url: true, //TODO: Check at least 1 does
+							online_content: ko.observable(true), //TODO: Check at least 1 does
+							local_content: ko.observable(), //TODO: Check at least 1 does
+							required_array: ko.observableArray(),
+							version: ko.observable(""),
+							downloads: ko.observable(0),  //TODO: Compute Total
+							newly_updated: ko.observable(false),
+							allow_uninstall: ko.computed(function() { return false;}), //TODO
+							data: {
+								content_id: "",
+								store_id: "",
+								display_name: selectedContent.length + " items selected",
+								description: "(Multiple items selected)",
+								author: "Multiple authors", //TODO: actually check this
+								url: true, //TODO: Check at least 1 does
+								version: "",
+								date: "",
+								enabled: ko.observable(false)
+							}
+						}
+					}
+				},
+				deferEvaluation: true
+			})
+		},
 		
 		fixVersionString: function(version) {
 			var components = version.split(".");
@@ -198,13 +294,12 @@ function load_plugin_content(data, folder) {
 		},
 		
 		showContentInformation: function(local, content_id) {
+
 			if (content_id == null) {
 				if (local == true) {
-					model.content.hover_local_content(null);
 					ko.cleanNode(document.getElementById("content-detail-local"));
 					$("#content-detail-local").html("");
 				} else {
-					model.content.hover_online_content(null);
 					ko.cleanNode(document.getElementById("content-detail-online"));
 					$("#content-detail-online").html("");
 				}
@@ -213,33 +308,41 @@ function load_plugin_content(data, folder) {
 					var content = pahub.api.content.getContentItem(local, content_id);
 					var html = "";
 					if (content.local == true) {
-						model.content.hover_local_content(content);
 						if (content.store.data.hasOwnProperty("custom_local_content_info_func") == true) {
 							if (typeof window[content.store.data.custom_local_content_info_func] === 'function') {
 								html = window[content.store.data.custom_local_content_info_func](local, content_id);
 							}
 						} else {
+							//TODO: News link
+							//TODO: Enabled checkbox next to enable/disbale button
 							html = 
-								"<!-- ko with: model.content.hover_local_content -->" +
-								"<div class='content-detail' data-bind=\"css: {'content-disabled': !data.enabled(), 'content-update-available': online_content() ? version() != online_content().version() : false}\">" +
-									"<div class='content-item' data-bind='style: {border: \"2px solid rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'>" +
+								"<!-- ko with: model.content.selected_local_content_data() -->" +
+								"<div class='content-detail' data-bind=\"css: {'content-disabled': !data.enabled(), 'content-update-available': typeof online_content() === 'object' ? version() != online_content().version() : false}\">" +
+									"<div class='content-item' data-bind='style: {border: \"2px solid rgba(\" + (store ? $data.store.data.content_colour[0] : 255) + \",\" + (store ? $data.store.data.content_colour[1] : 255) + \",\" + (store ? $data.store.data.content_colour[2] : 255) + \",\" + (data.enabled() ? 1.0 : 0.25) + \")\"}'>" +
 										"<img class='content-image' alt='' title='' data-bind=\"attr : { src : $data.icon() }\"/>" +
 									"</div>" +
 									"<div class='content-detail-item'>" +
-										/*
-										"<div class='content-detail-checkbox'>" +
-											"<input type='checkbox' data-bind='checked: data.enabled, click: function() { pahub.api.content.setContentEnabled($data, $data.data.enabled()); return true}'></input><label></label>" +
-										"</div>	" +
-										*/
-										"<div class='content-actions'>" +
+										"<div class='content-downloads'>" +
+											"<div><img src=\"assets/img/download.png\"/></div>" +
+											"<div class='content-downloads-value' data-bind='text: downloads()'></div>" +
 										"</div>" +
 										"<div class='content-name' data-bind='text: display_name()'></div>" +
 										"<!-- ko if: newly_updated() -->" +
 											"<div class='content-new' data-bind='text: \"NEW!\"'></div>" +
 										"<!-- /ko -->" +
-										"<div class='content-type' data-bind='text: store.data.content_name, style: {color: \"rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'></div>" +
-										"<div class='content-author' data-bind='text: \"by \" + data.author'></div>" +
-										"<div class='content-version' data-bind='text: \"Version: v\" + version()'></div>" +
+										"<!-- ko if: store -->" +
+											"<div class='content-type' data-bind='text: store.data.content_name, style: {color: \"rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'></div>" +
+											"<div class='content-author' data-bind='text: \"by \" + data.author'></div>" +
+										"<!-- /ko -->" +
+										"<!-- ko ifnot: store -->" +
+											"<div class='content-author' data-bind='text: data.author' style='clear: left'></div>" +
+										"<!-- /ko -->" +
+										"<!-- ko if: data.version -->" +
+											"<div class='content-version' data-bind='text: \"Version: v\" + version()'></div>" +
+										"<!-- /ko -->" +
+										"<!-- ko ifnot: data.version -->" +
+											"<div class='content-version'>&nbsp;</div>" +
+										"<!-- /ko -->" +
 										"<!-- ko if: data.build -->" +
 											"<div class='content-build' data-bind='text: \", Build \" + data.build'></div>" +
 										"<!-- /ko -->" +
@@ -254,19 +357,33 @@ function load_plugin_content(data, folder) {
 											"<!-- /ko -->" +
 										"<!-- /ko -->" +
 										"<div class='content-actions'>" +
-											"<!-- ko if: data.forum -->" +
-												"<div class='text-button' data-bind='click: function() {shell.openExternal(data.forum)}'>Forum</div>" +
-											"<!-- /ko -->" +
-											"<!-- ko if: online_content() && online_content().data.url -->" +
-												"<!-- ko if: semver.gt(online_content().version(), version()) -->" +
-													"<div class='text-button-update text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Update</div>" +
+											"<!-- ko if: model.content.selected_local_content().length == 1 -->" +
+												// FIXME: Don't include the logic here, add a function
+												// FIXME: First check there are news items.
+												"<!-- ko if: pahub.api.content.contentItemExists(true, \"com.pahub.content.plugin.community\") == true && pahub.api.content.getContentItem(true, \"com.pahub.content.plugin.community\").data.enabled() == true -->" +
+													"<div class=\"text-button\" data-bind='click: function() {pahub.api.news.setFilter(content_id); pahub.api.section.setActiveSection(\"section-community\"); pahub.api.tab.setActiveTab(\"news\"); model.news.show_add(false)}'>News</div>" +
 												"<!-- /ko -->" +
-												"<!-- ko ifnot: semver.gt(online_content().version(), version()) -->" +
-													"<div class='text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Install</div>" +
+												"<!-- ko if: data.forum -->" +
+													"<div class='text-button' data-bind='click: function() {shell.openExternal(data.forum)}'>Forum</div>" +
+												"<!-- /ko -->" +
+												"<div class='text-button' data-bind='click: function() {pahub.api.content.setContentEnabled($data, !(data.enabled()));}, text: data.enabled() ? \"Disable\" : \"Enable\"'></div>" +
+												"<!-- ko if: online_content() && online_content().data.url -->" +
+													"<!-- ko if: semver.gt(online_content().version(), version()) -->" +
+														"<div class='text-button-update text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Update</div>" +
+													"<!-- /ko -->" +
+													"<!-- ko ifnot: semver.gt(online_content().version(), version()) -->" +
+														"<div class='text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Reinstall</div>" +
+													"<!-- /ko -->" +
+												"<!-- /ko -->" +
+												"<!-- ko if: model.isCorePlugin(data.content_id) == false -->" +
+													"<div class='text-button-uninstall text-button' data-bind='click: function() {alert(\"Not Yet Implemented\")}'>Uninstall</div>" +
 												"<!-- /ko -->" +
 											"<!-- /ko -->" +
-											"<!-- ko if: model.isCorePlugin(data.content_id) == false -->" +
-												"<div class='text-button-uninstall text-button' data-bind='click: function() {alert(\"Not Yet Implemented\")}'>Uninstall</div>" +
+											"<!-- ko ifnot: model.content.selected_local_content().length == 1 -->" +
+												"<div class='text-button' data-bind='click: function() {}'>Enable All</div>" +
+												"<div class='text-button' data-bind='click: function() {}'>Disable All</div>" +
+												"<div class='text-button' data-bind='click: function() {}'>Reinstall All</div>" +
+												"<div class='text-button-uninstall text-button' data-bind='click: function() {alert(\"Not Yet Implemented\")}'>Uninstall All</div>" +
 											"<!-- /ko -->" +
 										"</div>" +
 										"<div class='content-description' data-bind='text: data.description'></div>" +
@@ -279,24 +396,18 @@ function load_plugin_content(data, folder) {
 						$("#content-detail-local").html(html);
 						ko.applyBindings(model, document.getElementById("content-detail-local"));
 					} else {
-						model.content.hover_online_content(content);
 						if (content.store.data.hasOwnProperty("custom_online_content_info_func") == true) {
 							if (typeof window[content.store.data.custom_online_content_info_func] === 'function') {
 								html = window[content.store.data.custom_online_content_info_func](content_item);
 							}
 						} else {
 							html = 
-								"<!-- ko with: model.content.hover_online_content -->" +
-								"<div class='content-detail' data-bind=\"css: {'content-update-available': local_content() ? version() != local_content().version() : false}\">" +
-									"<div class='content-item' data-bind='style: {border: \"2px solid rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'>" +
+								"<!-- ko with: model.content.selected_online_content_data() -->" +
+								"<div class='content-detail' data-bind=\"css: {'content-update-available': typeof local_content() === 'object' ? version() != local_content().version() : false}\">" +
+									"<div class='content-item' data-bind='style: {border: \"2px solid rgba(\" + (store ? $data.store.data.content_colour[0] : 255) + \",\" + (store ? $data.store.data.content_colour[1] : 255) + \",\" + (store ? $data.store.data.content_colour[2] : 255) + \",1.0)\"}'>" +
 										"<img class='content-image' alt='' title='' data-bind=\"attr : { src : $data.icon() }\"/>" +
 									"</div>" +
 									"<div class='content-detail-item'>" +
-										/*
-										"<div class='content-detail-checkbox'>" +
-											"<input type='checkbox' data-bind='checked: data.enabled, click: function() { pahub.api.content.setContentEnabled($data, $data.data.enabled()); return true}'></input><label></label>" +
-										"</div>	" +
-										*/
 										"<div class='content-downloads'>" +
 											"<div><img src=\"assets/img/download.png\"/></div>" +
 											"<div class='content-downloads-value' data-bind='text: downloads()'></div>" +
@@ -305,9 +416,19 @@ function load_plugin_content(data, folder) {
 										"<!-- ko if: newly_updated() -->" +
 											"<div class='content-new' data-bind='text: \"NEW!\"'></div>" +
 										"<!-- /ko -->" +
-										"<div class='content-type' data-bind='text: store.data.content_name, style: {color: \"rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'></div>" +
-										"<div class='content-author' data-bind='text: \"by \" + data.author'></div>" +
-										"<div class='content-version' data-bind='text: \"Version: v\" + version()'></div>" +
+										"<!-- ko if: store -->" +
+											"<div class='content-type' data-bind='text: store.data.content_name, style: {color: \"rgba(\" + $data.store.data.content_colour[0] + \",\" + $data.store.data.content_colour[1] + \",\" + $data.store.data.content_colour[2] + \",1.0)\"}'></div>" +
+											"<div class='content-author' data-bind='text: \"by \" + data.author'></div>" +
+										"<!-- /ko -->" +
+										"<!-- ko ifnot: store -->" +
+											"<div class='content-author' data-bind='text: data.author' style='clear: left'></div>" +
+										"<!-- /ko -->" +
+										"<!-- ko if: data.version -->" +
+											"<div class='content-version' data-bind='text: \"Version: v\" + version()'></div>" +
+										"<!-- /ko -->" +
+										"<!-- ko ifnot: data.version -->" +
+											"<div class='content-version'>&nbsp;</div>" +
+										"<!-- /ko -->" +
 										"<!-- ko if: data.build -->" +
 											"<div class='content-build' data-bind='text: \", Build \" + data.build'></div>" +
 										"<!-- /ko -->" +
@@ -322,16 +443,29 @@ function load_plugin_content(data, folder) {
 											"<!-- /ko -->" +
 										"<!-- /ko -->" +
 										"<div class='content-actions'>" +
-											"<!-- ko if: data.forum -->" +
-												"<div class='text-button' data-bind='click: function() {shell.openExternal(data.forum)}'>Forum</div>" +
-											"<!-- /ko -->" +
-											"<!-- ko if: data.url -->" +
-												"<!-- ko if: local_content() && semver.gt(version(), local_content().version()) -->" +
-													"<div class='text-button-update text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Update</div>" +
+											"<!-- ko if: model.content.selected_online_content().length == 1 -->" +
+												// FIXME: Don't include the logic here, add a function
+												// FIXME: First check there are news items.
+												"<!-- ko if: pahub.api.content.contentItemExists(true, \"com.pahub.content.plugin.community\") == true && pahub.api.content.getContentItem(true, \"com.pahub.content.plugin.community\").data.enabled() == true -->" +
+													"<div class=\"text-button\" data-bind='click: function() {pahub.api.news.setFilter(content_id); pahub.api.section.setActiveSection(\"section-community\"); pahub.api.tab.setActiveTab(\"news\"); model.news.show_add(false)}'>News</div>" +
 												"<!-- /ko -->" +
-												"<!-- ko ifnot: local_content() && semver.gt(version(), local_content().version()) -->" +
+												"<!-- ko if: data.forum -->" +
+													"<div class='text-button' data-bind='click: function() {shell.openExternal(data.forum)}'>Forum</div>" +
+												"<!-- /ko -->" +
+												"<!-- ko if: local_content() && local_content().data.url -->" +
+													"<!-- ko if: semver.gt(version(), local_content().version()) -->" +
+														"<div class='text-button-update text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Update</div>" +
+													"<!-- /ko -->" +
+													"<!-- ko ifnot: semver.gt(version(), local_content().version()) -->" +
+														"<div class='text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Reinstall</div>" +
+													"<!-- /ko -->" +
+												"<!-- /ko -->" +
+												"<!-- ko ifnot: local_content() && local_content().data.url -->" +
 													"<div class='text-button' data-bind='click: function() {pahub.api.content.installContentItem(data.content_id)}'>Install</div>" +
 												"<!-- /ko -->" +
+											"<!-- /ko -->" +
+											"<!-- ko ifnot: model.content.selected_online_content().length == 1 -->" +
+												"<div class='text-button' data-bind='click: function() {}'>Install All</div>" +
 											"<!-- /ko -->" +
 										"</div>" +
 										"<div class='content-description' data-bind='text: data.description'></div>" +
@@ -394,6 +528,7 @@ function load_plugin_content(data, folder) {
 						version: ko.observable(pahub.api.content.fixVersionString(data.version)),
 						downloads: ko.observable(0),
 						newly_updated: ko.observable(false),
+						selected: ko.observable(false), //should really be dynamic (ko.computed)
 						data: data //ko.mapping
 					}
 					
@@ -646,6 +781,14 @@ function load_plugin_content(data, folder) {
 				});
 			}
 			return allDependentsDisabled;
+		},
+
+		getContentEnabled: function (loca, content_id) {
+			if (pahub.api.content.contentItemExists(local, content_id) == true) {
+				var content = pahub.api.content.getContentItem(local, content_id);
+				return content.data.enabled();
+			} 
+			return false;
 		},
 		
 		//change to content_id, enabled?
@@ -1393,6 +1536,10 @@ function load_plugin_content(data, folder) {
 			return left.downloads() == right.downloads() ? 0 : (left.downloads() < right.downloads() ? 1 : -1);
 		}
 	}, group_func_downloads);
+	
+	
+	model.content.selected_local_content_data(model.content.getSelectedContentStructure(true));
+	model.content.selected_online_content_data(model.content.getSelectedContentStructure(false));
 	
 	pahub.api.section.addSection("section-content", "CONTENT HUB", path.join(folder, "contenthub.png"), "sections", 20);
 	pahub.api.section.addSection("section-content-download", "DOWNLOADS", path.join(folder, "download.png"), "header", 20);
