@@ -8,6 +8,12 @@
     "date": "2014/11/04",
     "resources": [
         "com.pahub.content.plugin.contenthub.js",
+        "com.pahub.content.plugin.contenthub-api.js",
+        "com.pahub.content.plugin.contenthub-content.js",
+        "com.pahub.content.plugin.contenthub-actions.js",
+        "com.pahub.content.plugin.contenthub-selection.js",
+        "com.pahub.content.plugin.contenthub-sort.js",
+        "com.pahub.content.plugin.contenthub-filter.js",
         "com.pahub.content.plugin.contenthub.css"
     ],
     "load_func": "load_plugin_content",
