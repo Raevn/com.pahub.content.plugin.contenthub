@@ -49,13 +49,19 @@ setup_contenthub_selection = function () {
 			content.selected(false);
 		}
 		
-		model.content.showContentInformation(local, content_id);
+		model.content.showContentInformation(local);
 	}
 
 	mc.getSelectedContentStructure = function(local) {
 		return ko.computed({
 			read: function() {
 				var selectedContent = model.content.getSelectedContent(local)();
+				
+				var total_downloads = 0;
+				for (var i = 0; i < selectedContent.length; i++) {
+					total_downloads += selectedContent[i].downloads();
+				}
+				
 				if (selectedContent.length == 1) {
 					return selectedContent[0];
 				} else {
@@ -71,7 +77,7 @@ setup_contenthub_selection = function () {
 						local_content: ko.observable(), //TODO: Check at least 1 does
 						required_array: ko.observableArray(),
 						version: ko.observable(""),
-						downloads: ko.observable(0),  //TODO: Compute Total
+						downloads: ko.observable(total_downloads),
 						newly_updated: ko.observable(false),
 						allow_uninstall: ko.computed(function() { return false;}), //TODO
 						data: {
@@ -79,7 +85,7 @@ setup_contenthub_selection = function () {
 							store_id: "",
 							display_name: selectedContent.length + " items selected",
 							description: "(Multiple items selected)",
-							author: "Multiple authors", //TODO: actually check this
+							author: "Multiple authors",
 							url: true, //TODO: Check at least 1 does
 							version: "",
 							date: "",

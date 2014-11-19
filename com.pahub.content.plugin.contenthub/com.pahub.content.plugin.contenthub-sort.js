@@ -10,6 +10,18 @@ setup_contenthub_sort = function() {
 	mc.local_content_group = ko.observable(true);
 	mc.online_content_group = ko.observable(true);
 
+	//returns a sorted array without modifying the original
+	ko.observableArray.fn.sorted_list = function(sort_method) {
+		return ko.pureComputed(function() {	
+			var all_items = this();
+			var sorted_items = $.extend([], all_items);
+			
+			sorted_items.sort(sort_method);
+			
+			return sorted_items;
+		}, this);
+	}
+	
 	mc.getSortMethods = function(local) {
 		if (local == true) {
 			return model.content.local_content_sort_methods;
@@ -220,15 +232,4 @@ setup_contenthub_sort = function() {
 		}
 	}, group_func_downloads);
 
-	//returns a sorted array without modifying the original
-	ko.observableArray.fn.sorted_list = function(sort_method) {
-		return ko.pureComputed(function() {	
-			var all_items = this();
-			var sorted_items = $.extend([], all_items);
-			
-			sorted_items.sort(sort_method);
-			
-			return sorted_items;
-		}, this);
-	}
 }

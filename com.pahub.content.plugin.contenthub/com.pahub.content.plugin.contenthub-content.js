@@ -170,8 +170,7 @@ setup_contenthub_content = function() {
 			}
 		}
 	}
-	
-	
+		
 	mc.contentStoreExists = function(store_id) {
 		return getMapItemIndex(model.content.content_stores(), "store_id", store_id) > -1;
 	}
@@ -254,13 +253,12 @@ setup_contenthub_content = function() {
 		}
 		return allDependentsDisabled;
 	}
-
 	
 	mc.verifyContentDependencies = function() {
 		var contentItems = pahub.api.content.getContentItems(true);
 		for (var i = 0; i < contentItems.length; i++) {
 			if (contentItems[i].data.hasOwnProperty("required") == true && pahub.api.content.contentDependenciesExist(true, contentItems[i].data.required, true) == false) {
-				pahub.api.content.disableContent(contentItems[i]);
+				pahub.api.content.disableContentItem(contentItems[i].content_id);
 			}
 		}
 	}
@@ -419,7 +417,7 @@ setup_contenthub_content = function() {
 						var content_item = pahub.api.content.addContentItem(true, contentInfo.store_id, contentInfo.content_id, contentInfo.data.display_name, contentInfo.url, contentInfo.data);
 						if (content_item != false) {
 							if (content_item.data.enabled() == true) {
-								model.content.enableContent(content_item);
+								pahub.api.content.enableContentItem(content_item.content_id);
 							}
 						}
 						hasChanged = true;
@@ -442,7 +440,7 @@ setup_contenthub_content = function() {
 				var content = pahub.api.content.addContentItem(true, item.store_id, item.content_id, item.data.display_name, item.url, item.data);
 				if (content != false) {
 					if (content.data.enabled() == true) {
-						model.content.enableContent(content);
+						pahub.api.content.enableContentItem(content.content_id);
 					}
 				}
 			});

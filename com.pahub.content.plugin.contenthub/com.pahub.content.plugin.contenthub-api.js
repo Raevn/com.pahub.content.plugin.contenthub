@@ -25,18 +25,21 @@ pahub.api["content"] = {
 	getContentName: function(content_id, prefer_local) { return model.content.getContentName(content_id, prefer_local); },
 	
 	/* ACTIONS */
+	getContentItemEnabled: function(content_id) { return model.content.getContentItemEnabled( content_id); },
 	installContentItem: function(content_id) { model.content.installContentItem(content_id); },	
-	getContentEnabled: function(local, content_id) { return model.content.getContentEnabled(local, content_id); }, //deprecate
-	//getContentItemEnabled: function(local, content_id) { return model.content.getContentItemEnabled(local, content_id); },
-	setContentEnabled: function(content, enabled) { return model.content.setContentEnabled(content, enabled); }, //deprecate
-	enableContent: function(content, enabled) { return model.content.enableContent(content); }, //deprecate
-	disableContent: function(content, enabled) { return model.content.disableContent(content); }, //deprecate
-	//setContentItemEnabled: function(content, enabled) { return model.content.setContentItemEnabled(local, content_id, enabled); },
-	//enableContentItem: function(content, enabled) { return model.content.enableContentItem(local, content_id); },
-	//disableContentItem: function(content, enabled) { return model.content.disableContentItem(local, content_id); },
-	//setContentItemsEnabled: function(content, enabled) { return model.content.setContentItemsEnabled(local, content_id, enabled); },
-	//enableContentItems: function(content, enabled) { return model.content.enableContentItems(local, content_id); },
-	//disableContentItems: function(content, enabled) { return model.content.disableContentItems(local, content_id); },
+	setContentItemEnabled: function(content_id, enabled) { return model.content.setContentItemEnabled(content_id, enabled); },
+	enableContentItem: function(content_id) { return model.content.enableContentItem(content_id); },
+	disableContentItem: function(content_id) { return model.content.disableContentItem(content_id); },
+	installContentItems: function(content_ids) { model.content.installContentItems(content_ids); },	
+	setContentItemsEnabled: function(content_ids, enabled) { return model.content.setContentItemsEnabled(content_ids, enabled); },
+	enableContentItems: function(content_ids) { return model.content.enableContentItems(content_ids); },
+	disableContentItems: function(content_ids) { return model.content.disableContentItems(content_ids); },
+
+	//Deprecated
+	getContentEnabled: function(local, content_id) { return model.content.getContentEnabled(local, content_id); },
+	setContentEnabled: function(content, enabled) { return model.content.setContentEnabled(content, enabled); },
+	enableContent: function(content) { return model.content.enableContent(content); },
+	disableContent: function(content) { return model.content.disableContent(content); },
 	
 	/* FILTER */
 	addFilterOption: function(local, label, type, key, mode, names, values) { model.content.addFilterOption(local, label, type, key, mode, names, values); },
@@ -56,5 +59,5 @@ pahub.api["content"] = {
 	setSortAscending: function(local, direction) { return model.content.setSortAscending(local, direction);},
 	
 	/* SELECTION */
-	getSelectedContent: function(local) { model.content.getSelectedContent(local)(); }
+	getSelectedContent: function(local) { return model.content.getSelectedContent(local)(); }
 }
