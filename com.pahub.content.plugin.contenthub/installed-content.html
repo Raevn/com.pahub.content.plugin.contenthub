@@ -1,17 +1,17 @@
 <div class="content-scroll-wrapper">
 	<div class='heading1'>INSTALLED LOCAL CONTENT</div>
 	<div class='sub-tab-container'>
-		<div data-bind="css: {'selected-tab': model.content.local_content_filter_tab() == 'filter'}, click: function(){ model.content.local_content_filter_tab('filter'); model.content.local_content_filter_view(true)}" class="tab">
+		<div data-bind="css: {'selected-tab': model.content.local_content_filter_tab() == 'filter'}, click: function(){ model.content.local_content_filter_view(model.content.local_content_filter_tab() == 'filter' ? !model.content.local_content_filter_view() : true); model.content.local_content_filter_tab('filter'); }" class="tab">
 			<span class="tab-display-name">Filter</span> 
 		</div>
-		<div data-bind="css: {'selected-tab': model.content.local_content_filter_tab() == 'sort'}, click: function(){ model.content.local_content_filter_tab('sort'); model.content.local_content_filter_view(true)}" class="tab">
+		<div data-bind="css: {'selected-tab': model.content.local_content_filter_tab() == 'sort'}, click: function(){ model.content.local_content_filter_view(model.content.local_content_filter_tab() == 'sort' ? !model.content.local_content_filter_view() : true); model.content.local_content_filter_tab('sort'); }" class="tab">
 			<span class="tab-display-name">Sort</span> 
 		</div>
-		<div data-bind="css: {'selected-tab': model.content.local_content_filter_tab() == 'display'}, click: function(){ model.content.local_content_filter_tab('display'); model.content.local_content_filter_view(true)}" class="tab">
+		<div data-bind="css: {'selected-tab': model.content.local_content_filter_tab() == 'display'}, click: function(){ model.content.local_content_filter_view(model.content.local_content_filter_tab() == 'display' ? !model.content.local_content_filter_view() : true); model.content.local_content_filter_tab('display'); }" class="tab">
 			<span class="tab-display-name">Display</span> 
 		</div>
 		<div class="far-right-tab-list">
-			<div class='text-button' data-bind="text: model.content.local_content_filter_view() ? 'Hide Options' : 'Show Options', click: function() { model.content.local_content_filter_view(!model.content.local_content_filter_view()); }">Show</div> 
+			<div class='text-button' data-bind="click: function() { pahub.api.content.refreshAllLocalContent() }">Refresh</div> 
 		</div>
 	</div>
 	<!-- ko if: model.content.local_content_filter_view -->
@@ -91,7 +91,8 @@
 			<!-- /ko -->
 		</div>
 	<!-- /ko -->
-	<div data-bind="text: 'Showing ' + content.local_content_items.filtered_list(model.content.local_content_filters())().length + ' of ' + content.local_content_items().length + ' items.'"></div>
+	<span data-bind="text: 'Showing ' + content.local_content_items.filtered_list(model.content.local_content_filters())().length + ' of ' + content.local_content_items().length + ' items (' + model.content.selected_local_content().length + ' selected).'"></span>
+	<div class='text-button' data-bind="click: function() { pahub.api.content.selectAll(true); }">Select All</div> <div class='text-button' data-bind="click: function() { pahub.api.content.selectNone(true); }">Select None</div>
 	<div class="content-list">
 		<!-- ko foreach: model.content.local_content_items.filtered_list(model.content.local_content_filters()) --> 
 			<!-- ko if: model.content.local_content_group() && ($index() == 0 || model.content.getContentItemGroup(true, model.content.local_content_items.filtered_list(model.content.local_content_filters())()[$index() - 1].content_id) != model.content.getContentItemGroup(true, $data.content_id)) -->

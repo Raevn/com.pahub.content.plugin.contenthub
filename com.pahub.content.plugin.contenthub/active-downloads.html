@@ -23,7 +23,7 @@
 <div data-bind='text: "Total Downloaded: " + getFileSizeString(pahub.api.resource.getTotalDownloaded())'></div>
 <!-- ko foreach: resource_queue -->
 	<!-- ko if: processed -->
-		<!-- ko ifnot: false -->
+		<!-- ko ifnot: local -->
 			<div>
 				<div data-bind='text: name + " (" + getFileSizeString(completed()) + ")"'></div>
 			</div>

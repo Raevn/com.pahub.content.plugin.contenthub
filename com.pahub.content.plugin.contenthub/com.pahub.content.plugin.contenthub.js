@@ -277,12 +277,12 @@ function load_plugin_content(data, folder) {
 	setup_contenthub_filter();
 	setup_contenthub_sort();
 	
-	pahub.api.section.addSection("section-content", "CONTENT HUB", path.join(folder, "contenthub.png"), "sections", 20);
-	pahub.api.section.addSection("section-content-download", "DOWNLOADS", path.join(folder, "download.png"), "header", 20);
+	pahub.api.section.addSection("section-content", "CONTENT", path.join(folder, "contenthub.png"), "sections", 20);
+	pahub.api.section.addSection("section-content-download", "", path.join(folder, "download.png"), "header", 20);
 	pahub.api.tab.addTab("section-content", "spotlight-content", "SPOTLIGHT", "", 10);
 	pahub.api.tab.addTab("section-content", "installed-content", "LOCAL CONTENT", "", 20);
 	pahub.api.tab.addTab("section-content", "find-content", "FIND CONTENT", "", 30);
-	pahub.api.tab.addTab("section-content", "upload-content", "UPLOAD CONTENT", "", 40);
+	//pahub.api.tab.addTab("section-content", "upload-content", "UPLOAD CONTENT", "", 40);
 	pahub.api.tab.addTab("section-content-download", "active-downloads", "", "", 50);
 	
 	pahub.api.resource.loadResource(path.join(folder, "spotlight-content.html"), "get", {name: "HTML: spotlight-content", mode: "async", success: function(resource) {
@@ -301,17 +301,17 @@ function load_plugin_content(data, folder) {
 		pahub.api.tab.setTabContent("section-content-download", "active-downloads", resource.data);
 	}});
 	
-	pahub.api.setting.addSettingGroup("contenthub", "Content Hub Settings [Debug]");
-	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_sort", model.content.local_content_sort, "text", "text", "Name", "local_content_sort", null, {});
-	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_group", model.content.local_content_group, "boolean", "checkbox", true, "local_content_group", null, {});
-	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_sort_asc", model.content.local_content_sort_asc, "boolean", "checkbox", true, "local_content_sort_asc", null, {});
-	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_sort", model.content.online_content_sort, "text", "text", "Name", "online_content_sort", null, {});
-	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_group", model.content.online_content_group, "boolean", "checkbox", true, "online_content_group", null, {});
-	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_sort_asc", model.content.online_content_sort_asc, "boolean", "checkbox", true, "online_content_sort_asc", null, {});
-	pahub.api.setting.addSetting("contenthub", "plugin.content.content_spotlight_item_count", model.content.content_spotlight_item_count, "integer", "text", 5, "content_spotlight_item_count", null, {});
+	pahub.api.setting.addSettingGroup("contenthub", "Content Hub Settings");
+	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_sort", model.content.local_content_sort, "text", null, "Name", "local_content_sort", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_group", model.content.local_content_group, "boolean", null, true, "local_content_group", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_sort_asc", model.content.local_content_sort_asc, "boolean", null, true, "local_content_sort_asc", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_sort", model.content.online_content_sort, "text", null, "Name", "online_content_sort", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_group", model.content.online_content_group, "boolean", null, true, "online_content_group", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_sort_asc", model.content.online_content_sort_asc, "boolean", null, true, "online_content_sort_asc", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.content_spotlight_item_count", model.content.content_spotlight_item_count, "integer", "text", 5, "Spotlight Item Count", null, {});
 	
-	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_filter_view", model.content.local_content_filter_view, "boolean", "checkbox", false, "local_content_filter_view", null, {});
-	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_filter_view", model.content.online_content_filter_view, "boolean", "checkbox", false, "online_content_filter_view", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.local_content_filter_view", model.content.local_content_filter_view, "boolean", null, false, "local_content_filter_view", null, {});
+	pahub.api.setting.addSetting("contenthub", "plugin.content.online_content_filter_view", model.content.online_content_filter_view, "boolean", null, false, "online_content_filter_view", null, {});
 	
 }
 

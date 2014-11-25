@@ -6,6 +6,19 @@ setup_contenthub_selection = function () {
 	mc.selected_local_content = ko.observableArray();
 	mc.selected_online_content = ko.observableArray();
 
+	mc.selectNone = function(local) {
+		model.content.setSelection(local, []);
+	},
+	
+	mc.selectAll = function(local) {
+		var content_items = model.content.getContentItems(local).filtered_list(model.content.online_content_filters())();
+		var content_ids = [];
+		for (var i = 0; i < content_items.length; i++) {
+			content_ids.push(content_items[i].content_id);
+		}
+		model.content.setSelection(local, content_ids);
+	},
+	
 	mc.getSelectedContent = function(local) {
 		if (local == true) {
 			return model.content.selected_local_content;
@@ -34,7 +47,7 @@ setup_contenthub_selection = function () {
 				content.selected(false);
 			}
 		}
-		model.content.showContentInformation(local, content_ids[0]);
+		model.content.showContentInformation(local);
 	}
 
 	mc.updateSelection = function(local, content_id) {

@@ -1,17 +1,17 @@
 <div class="content-scroll-wrapper">
 	<div class='heading1'>CONTENT AVAILABLE FOR DOWNLOAD</div>
 	<div class='sub-tab-container'>
-		<div data-bind="css: {'selected-tab': model.content.online_content_filter_tab() == 'filter'}, click: function(){ model.content.online_content_filter_tab('filter'); model.content.online_content_filter_view(true)}" class="tab">
+		<div data-bind="css: {'selected-tab': model.content.online_content_filter_tab() == 'filter'}, click: function(){ model.content.online_content_filter_view(model.content.online_content_filter_tab() == 'filter' ? !model.content.online_content_filter_view() : true); model.content.online_content_filter_tab('filter'); }" class="tab">
 			<span class="tab-display-name">Filter</span> 
 		</div>
-		<div data-bind="css: {'selected-tab': model.content.online_content_filter_tab() == 'sort'}, click: function(){ model.content.online_content_filter_tab('sort'); model.content.online_content_filter_view(true)}" class="tab">
+		<div data-bind="css: {'selected-tab': model.content.online_content_filter_tab() == 'sort'}, click: function(){ model.content.online_content_filter_view(model.content.online_content_filter_tab() == 'sort' ? !model.content.online_content_filter_view() : true); model.content.online_content_filter_tab('sort'); }" class="tab">
 			<span class="tab-display-name">Sort</span> 
 		</div>
-		<div data-bind="css: {'selected-tab': model.content.online_content_filter_tab() == 'display'}, click: function(){ model.content.online_content_filter_tab('display'); model.content.online_content_filter_view(true)}" class="tab">
+		<div data-bind="css: {'selected-tab': model.content.online_content_filter_tab() == 'display'}, click: function(){ model.content.online_content_filter_view(model.content.online_content_filter_tab() == 'display' ? !model.content.online_content_filter_view() : true); model.content.online_content_filter_tab('display'); }" class="tab">
 			<span class="tab-display-name">Display</span> 
 		</div>
 		<div class="far-right-tab-list">
-			<div class='text-button' data-bind="text: model.content.online_content_filter_view() ? 'Hide Options' : 'Show Options', click: function() { model.content.online_content_filter_view(!model.content.online_content_filter_view()); }">Show</div> 
+			<div class='text-button' data-bind="click: function() { pahub.api.content.refreshAllOnlineContent() }">Refresh</div> 
 		</div>
 	</div>
 	<!-- ko if: model.content.online_content_filter_view -->
@@ -91,12 +91,13 @@
 			<!-- /ko -->
 		</div>
 	<!-- /ko -->
-	<div data-bind="text: 'Showing ' + content.online_content_items.filtered_list(model.content.online_content_filters())().length + ' of ' + content.online_content_items().length + ' items.'"></div>
+	<span data-bind="text: 'Showing ' + content.online_content_items.filtered_list(model.content.online_content_filters())().length + ' of ' + content.online_content_items().length + ' items (' + model.content.selected_online_content().length + ' selected).'"></span>
+	<div class='text-button' data-bind="click: function() { pahub.api.content.selectAll(false); }">Select All</div> <div class='text-button' data-bind="click: function() { pahub.api.content.selectNone(false); }">Select None</div> 
 	<!-- ko foreach: content.online_content_items.filtered_list(model.content.online_content_filters()) --> 
 		<!-- ko if: model.content.online_content_group() && ($index() == 0 || model.content.getContentItemGroup(false, model.content.online_content_items.filtered_list(model.content.online_content_filters())()[$index() - 1].content_id) != model.content.getContentItemGroup(false, $data.content_id)) -->
 			<div class="heading2" style="" data-bind="text: model.content.getContentItemGroup(false, $data.content_id)"></div>
 		<!-- /ko -->
-		<div class='content-item' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',1.0)'}, css: {'content-update-available': local_content() ? version() != local_content().version() : false, 'content-selected': selected()}">
+		<div class='content-item' data-bind="style: {border: '2px solid rgba(' + $data.store.data.content_colour[0] + ',' + $data.store.data.content_colour[1] + ',' + $data.store.data.content_colour[2] + ',' + (local_content() ? 0.5 : 1.0) + ')'}, css: {'content-disabled': local_content() && version() == local_content().version(), 'content-update-available': local_content() ? version() != local_content().version() : false, 'content-selected': selected()}">
 			<img class='content-image' alt='' title='' data-bind="attr : { src : $data.icon() }"/>
 			<div class='content-item-cont' data-bind="click: function(data, event) {if (event.ctrlKey) { model.content.updateSelection(false, $data.content_id) } else { model.content.setSelection(false, [$data.content_id]) } }">
 				<div class='content-name' data-bind='text: display_name()'></div>

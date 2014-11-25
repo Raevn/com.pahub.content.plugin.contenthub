@@ -135,22 +135,6 @@
 	display: inline-block;
 }
 
-.sub-tab-container {
-	display: block;
-	position: relative;
-	left: 0px;
-	right: 0px;
-	margin-right: 10px;
-	border-bottom: 1px solid #515151;
-}
-
-.far-right-tab-list {
-	display: block;
-	position: absolute;
-	right: 5px;
-	bottom: 5px;
-}
-
 .content-detail-item-cont:hover img.content-detail-image {
 	opacity: 0.45;
 }
@@ -437,4 +421,19 @@ img.content-image {
 }
 .text-button-uninstall:hover  {
 	color: #EAEAEA;
+}
+
+.sub-tab-container {
+  display: block;
+  position: relative;
+  left: 0px;
+  right: 0px;
+  margin-right: 10px;
+  border-bottom: 1px solid #515151;
+}
+.far-right-tab-list {
+  display: block;
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
 }

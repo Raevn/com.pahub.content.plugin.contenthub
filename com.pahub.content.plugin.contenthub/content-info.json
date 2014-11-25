@@ -4,8 +4,8 @@
     "display_name": "Content Hub",
     "description": "Core Plugin for managing content and content stores",
     "author": "Raevn",
-    "version": "0.3.0",
-    "date": "2014/11/20",
+    "version": "0.4.0",
+    "date": "2014/11/26",
     "resources": [
         "com.pahub.content.plugin.contenthub.js",
         "com.pahub.content.plugin.contenthub-api.js",

@@ -63,6 +63,7 @@ setup_contenthub_actions = function() {
 						name: content.display_name(),
 						saveas: content.content_id + ".zip",
 						success: function(item) {
+							pahub.api.content.disableContentItem(content.content_id, true);
 							pahub.api.content.removeContentItem(true, content.content_id);
 							
 							if (content.store.data.hasOwnProperty("custom_install_content_func") == true) {
@@ -81,6 +82,7 @@ setup_contenthub_actions = function() {
 								restart();
 							} else {
 								pahub.api.content.refreshLocalContent(content.store_id);
+								pahub.api.content.verifyContentDependencies();
 							}
 							//switch to local content tab?
 						}
@@ -147,19 +149,21 @@ setup_contenthub_actions = function() {
 		}
 	}
 
-	mc.disableContentItem = function (content_id) {
+	mc.disableContentItem = function (content_id, dontDisableDependencies) {
 		var content_item = pahub.api.content.getContentItem(true, content_id);
 		
 		if(model.isCorePlugin(content_item.content_id) == false) {
-			var dependents = pahub.api.content.getContentItemDependents(true, content_item.content_id);
-			if (dependents != false) {
-				dependents.forEach(function(item) {
-					var content = pahub.api.content.getContentItem(true, item);
-					pahub.api.content.disableContentItem(content.content_id);
-				});
+			if (dontDisableDependencies != true) {
+				var dependents = pahub.api.content.getContentItemDependents(true, content_item.content_id);
+				if (dependents != false) {
+					dependents.forEach(function(item) {
+						var content = pahub.api.content.getContentItem(true, item);
+						pahub.api.content.disableContentItem(content.content_id);
+					});
+				}
 			}
 			
-			if (pahub.api.content.contentDependentsDisabled(true, dependents) == true) {
+			if (pahub.api.content.contentDependentsDisabled(true, dependents) == true || dontDisableDependencies == true) {
 				pahub.api.log.addLogMessage("info", content_item.store.data.content_name + " '" + content_item.content_id + "': disabled");
 				content_item.data.enabled(false);
 

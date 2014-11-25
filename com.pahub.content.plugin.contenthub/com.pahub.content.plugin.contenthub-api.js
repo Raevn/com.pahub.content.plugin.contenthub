@@ -59,5 +59,7 @@ pahub.api["content"] = {
 	setSortAscending: function(local, direction) { return model.content.setSortAscending(local, direction);},
 	
 	/* SELECTION */
-	getSelectedContent: function(local) { return model.content.getSelectedContent(local)(); }
+	getSelectedContent: function(local) { return model.content.getSelectedContent(local)(); },
+	selectAll: function(local) { model.content.selectAll(local); },
+	selectNone: function(local) { model.content.selectNone(local); }
 }

@@ -390,7 +390,7 @@ setup_contenthub_content = function() {
 			content_queue.forEach(function(item) {
 				if (pahub.api.content.contentItemExists(true, item.content_id) == true) {
 					var content = pahub.api.content.getContentItem(true, item.content_id);
-					if (content.version != item.version) {
+					if (content.version() != pahub.api.content.fixVersionString(item.data.version)) {
 						new_queue.push(item);
 					}						
 				} else {
@@ -472,9 +472,7 @@ setup_contenthub_content = function() {
 										window[store.data.find_online_content_func](store_id, catalogJSON);
 									}
 								} else {
-									for (var i = 0; i < catalogJSON.length; i++) {
-										pahub.api.log.addLogMessage("verb", "Found online " + store.data.content_name + ": '" + catalogJSON[i].content_id + "'");
-									}
+									pahub.api.log.addLogMessage("info", "Found " + catalogJSON.length + " online content items for store '" + store_id + "'");
 									for (var i = 0; i < catalogJSON.length; i++) {
 										pahub.api.content.addContentItem(false, store_id, catalogJSON[i].content_id, catalogJSON[i].display_name, null, catalogJSON[i]);
 									}
