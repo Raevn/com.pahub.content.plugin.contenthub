@@ -233,6 +233,7 @@ img.content-image {
 /****************/
 .content-item .content-name {
 	width: 140px;
+	overflow: hidden;
 }
 
 .content-item.content-selected .content-author, .content-item:hover .content-author {

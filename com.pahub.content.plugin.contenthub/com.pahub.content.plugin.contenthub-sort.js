@@ -89,15 +89,23 @@ setup_contenthub_sort = function() {
 	
 	var group_func_first_letter = function (content) {
 		if (content.display_name().length > 0) {
-			return content.display_name().charAt(0);
+			if (content.display_name().charAt(0).match(/[^a-z0-9]/i) == null) {
+				return content.display_name().charAt(0).toUpperCase();
+			} else {
+				return "(Symbol)"
+			}
 		} else {
 			return "";
 		}
 	}
 
 	var group_func_content_type = function (content) {
-		var store = pahub.api.content.getContentStore(content.store_id);
-		return store.data.content_name;
+		if (pahub.api.content.contentStoreExists(content.store_id) == true) {
+			var store = pahub.api.content.getContentStore(content.store_id);
+			return store.data.content_name;
+		} else {
+			return "Unknown";
+		}
 	}
 
 	var group_func_last_updated = function (content) { 
@@ -142,35 +150,35 @@ setup_contenthub_sort = function() {
 
 	pahub.api.content.addSortMethod(true, "Name", function(left, right) {
 		if (pahub.api.content.getSortAscending(true) == true ) {
-			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? -1 : 1);
+			return left.data.display_name.toLowerCase() == right.data.display_name.toLowerCase() ? 0 : (left.data.display_name.toLowerCase() < right.data.display_name.toLowerCase() ? -1 : 1);
 		} else {
-			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? 1 : -1);
+			return left.data.display_name.toLowerCase() == right.data.display_name.toLowerCase() ? 0 : (left.data.display_name.toLowerCase() < right.data.display_name.toLowerCase() ? 1 : -1);
 		}
 	}, group_func_first_letter);
 
 	pahub.api.content.addSortMethod(false, "Name", function(left, right) {
 		if (pahub.api.content.getSortAscending(false) == true ) {
-			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? -1 : 1);
+			return left.data.display_name.toLowerCase() == right.data.display_name.toLowerCase() ? 0 : (left.data.display_name.toLowerCase() < right.data.display_name.toLowerCase() ? -1 : 1);
 		} else {
-			return left.data.display_name == right.data.display_name ? 0 : (left.data.display_name < right.data.display_name ? 1 : -1);
+			return left.data.display_name.toLowerCase() == right.data.display_name.toLowerCase() ? 0 : (left.data.display_name.toLowerCase() < right.data.display_name.toLowerCase() ? 1 : -1);
 		}
 	}, group_func_first_letter);
 
 	pahub.api.content.addSortMethod(true, "Author", function(left, right) {
 		if (pahub.api.content.getSortAscending(true) == true ) {
-			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? -1 : 1);
+			return left.data.author.toLowerCase() == right.data.author.toLowerCase() ? 0 : (left.data.author.toLowerCase() < right.data.author.toLowerCase() ? -1 : 1);
 		} else {
-			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? 1 : -1);
+			return left.data.author.toLowerCase() == right.data.author.toLowerCase() ? 0 : (left.data.author.toLowerCase() < right.data.author.toLowerCase() ? 1 : -1);
 		}
-	}, function (content) { return content.data.author});
+	}, function (content) { return content.data.author.toUpperCase();});
 
 	pahub.api.content.addSortMethod(false, "Author", function(left, right) {
 		if (pahub.api.content.getSortAscending(false) == true ) {
-			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? -1 : 1);
+			return left.data.author.toLowerCase() == right.data.author.toLowerCase() ? 0 : (left.data.author.toLowerCase() < right.data.author.toLowerCase() ? -1 : 1);
 		} else {
-			return left.data.author == right.data.author ? 0 : (left.data.author < right.data.author ? 1 : -1);
+			return left.data.author.toLowerCase() == right.data.author.toLowerCase() ? 0 : (left.data.author.toLowerCase() < right.data.author.toLowerCase() ? 1 : -1);
 		}
-	}, function (content) { return content.data.author});
+	}, function (content) { return content.data.author.toUpperCase();});
 
 	pahub.api.content.addSortMethod(false, "Last Updated", function(left, right) {
 		var leftDate = new Date(left.data.date);

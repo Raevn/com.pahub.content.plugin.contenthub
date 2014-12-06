@@ -57,6 +57,7 @@ setup_contenthub_actions = function() {
 				dependenciesOk = pahub.api.content.contentDependenciesExist(true, content.data.required, false);
 			}
 			if (dependenciesOk == true) {
+				var update = pahub.api.content.contentItemExists(false, content_id);
 				if (content.data.hasOwnProperty("url") == true) {
 				
 					pahub.api.resource.loadResource(content.data.url, "save", {
@@ -64,7 +65,6 @@ setup_contenthub_actions = function() {
 						saveas: content.content_id + ".zip",
 						success: function(item) {
 							
-							var update = pahub.api.content.contentItemExists(false, content_id);
 							if (pahub.api.content.contentItemExists(true, content_id) == true) {
 								pahub.api.content.disableContentItem(content.content_id, true);
 								pahub.api.content.removeContentItem(true, content.content_id);
@@ -91,6 +91,20 @@ setup_contenthub_actions = function() {
 							//switch to local content tab?
 						}
 					});
+				} else {
+					if (content.store.data.hasOwnProperty("custom_install_content_func") == true) {
+						if (typeof window[content.store.data.custom_install_content_func] === 'function') {
+							window[content.store.data.custom_install_content_func](content_id, update);
+						}	
+					}
+					
+					if (model.isCorePlugin(content_id) == true) {
+						alert("PA Hub will now restart to complete installation of a Core Plugin");
+						restart();
+					} else {
+						pahub.api.content.refreshLocalContent(content.store_id);
+						pahub.api.content.verifyContentDependencies();
+					}
 				}
 			} else {
 				alert("Unable to install " + content.display_name() + ", required dependencies are missing");
@@ -129,7 +143,7 @@ setup_contenthub_actions = function() {
 				};
 			}
 			if (pahub.api.content.contentDependenciesExist(content_item.local, content_item.data["required"], true) == true) {
-				pahub.api.log.addLogMessage("info", content_item.store.data.content_name + " '" + content_item.content_id + "': enabled");
+				pahub.api.log.addLogMessage("verb", content_item.store.data.content_name + " '" + content_item.content_id + "': enabled");
 				content_item.data.enabled(true);
 				
 				if (typeof window[content_item.store.data.content_enabled_func] == "function") {
@@ -170,7 +184,7 @@ setup_contenthub_actions = function() {
 				}
 				
 				if (pahub.api.content.contentDependentsDisabled(true, dependents) == true || dontDisableDependencies == true) {
-					pahub.api.log.addLogMessage("info", content_item.store.data.content_name + " '" + content_item.content_id + "': disabled");
+					pahub.api.log.addLogMessage("verb", content_item.store.data.content_name + " '" + content_item.content_id + "': disabled");
 					content_item.data.enabled(false);
 
 					if (typeof window[content_item.store.data.content_disabled_func] == "function") {

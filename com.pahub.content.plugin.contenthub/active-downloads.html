@@ -1,7 +1,7 @@
 <div class='heading1' data-bind='text: model.current_loc_data()["ACTIVE_DOWNLOADS"] || "ACTIVE DOWNLOADS"'></div>
 <!-- ko foreach: resource_queue -->
 	<!-- ko ifnot: processed -->
-		<!-- ko ifnot: local -->
+		<!-- ko ifnot: local || action == "get" -->
 			<div>
 				<div data-bind='text: name'></div>
 				<div data-bind='text: url'></div>
@@ -23,7 +23,7 @@
 <div data-bind='text: "Total Downloaded: " + getFileSizeString(pahub.api.resource.getTotalDownloaded())'></div>
 <!-- ko foreach: resource_queue -->
 	<!-- ko if: processed -->
-		<!-- ko ifnot: local -->
+		<!-- ko ifnot: local || action == "get" -->
 			<div>
 				<div data-bind='text: name + " (" + getFileSizeString(completed()) + ")"'></div>
 			</div>

@@ -92,7 +92,7 @@
 		</div>
 	<!-- /ko -->
 	<span data-bind="text: 'Showing ' + content.local_content_items.filtered_list(model.content.local_content_filters())().length + ' of ' + content.local_content_items().length + ' items (' + model.content.selected_local_content().length + ' selected).'"></span>
-	<div class='text-button' data-bind="click: function() { pahub.api.content.selectAll(true); }">Select All</div> <div class='text-button' data-bind="click: function() { pahub.api.content.selectNone(true); }">Select None</div>
+	<div class='text-button' data-bind="click: function() { pahub.api.content.selectAll(true); }">Select All</div> <div class='text-button' data-bind="click: function() { pahub.api.content.selectNone(true); }">Select None</div><br/><br/>
 	<div class="content-list">
 		<!-- ko foreach: model.content.local_content_items.filtered_list(model.content.local_content_filters()) --> 
 			<!-- ko if: model.content.local_content_group() && ($index() == 0 || model.content.getContentItemGroup(true, model.content.local_content_items.filtered_list(model.content.local_content_filters())()[$index() - 1].content_id) != model.content.getContentItemGroup(true, $data.content_id)) -->

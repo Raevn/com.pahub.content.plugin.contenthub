@@ -127,8 +127,9 @@
 			<div class="stat-label" data-bind="text: 'Available Content Items: '"></div><div class="stat-value" data-bind="text: pahub.api.content.getContentItems(false).length"></div><br/>
 			<div class="stat-label" data-bind="text: 'Installed Content Items: '"></div><div class="stat-value" data-bind="text: pahub.api.content.getContentItems(true).length"></div><br/>
 			<div class="stat-label" data-bind="text: 'Total Downloads: '"></div><div class="stat-value" data-bind="text: pahub.api.content.getTotalDownloads()"></div><br/>
-			<div class="stat-label" data-bind="text: 'PTE Build: '"></div><div class="stat-value" data-bind="text: model.pte_build()"></div><br/>
-			<div class="stat-label" data-bind="text: 'Stable Build: '"></div><div class="stat-value" data-bind="text: model.stable_build() + (model.steam() ? ' (Steam)' : '')"></div><br/>
+			<!-- ko foreach: model.streams() -->
+				<div class="stat-label" data-bind="text: streams[$data].name + ' stream: '"></div><div class="stat-value" data-bind="text: streams[$data].build"></div><br/>
+			<!-- /ko -->
 		</div>
 	</div>
 <!-- /ko -->

@@ -161,12 +161,13 @@ setup_contenthub_content = function() {
 				//remove from store
 				
 				if (local == true) {
-					content.store.local_content_items.remove(content);
+					content.store.local_content_items.remove(function(item) { return item.content_id == content_id });
 				} else {
-					content.store.online_content_items.remove(content);
+					content.store.online_content_items.remove(function(item) { return item.content_id == content_id });
 				}
+				
 				//remove from content list
-				content_items.remove(content);
+				content_items.remove(function(item) { return item.content_id == content_id });
 			}
 		}
 	}
@@ -317,14 +318,14 @@ setup_contenthub_content = function() {
 	}
 	
 	mc.refreshAllLocalContent = function() {
-		pahub.api.log.addLogMessage("info", "Refreshing all local contents");
+		pahub.api.log.addLogMessage("verb", "Refreshing all local content");
 		for (var i = 0; i < model.content.content_stores().length; i++) {
 			pahub.api.content.refreshLocalContent(model.content.content_stores()[i].store_id);
 		}
 	}
 	
 	mc.refreshLocalContent = function(store_id) {
-		pahub.api.log.addLogMessage("info", "Refreshing local content for store '" + store_id + "'");
+		pahub.api.log.addLogMessage("verb", "Refreshing local content for store '" + store_id + "'");
 		var store = pahub.api.content.getContentStore(store_id);
 		
 		if (store != false) {
@@ -448,7 +449,7 @@ setup_contenthub_content = function() {
 	}
 	
 	mc.refreshAllOnlineContent = function() {
-		pahub.api.log.addLogMessage("info", "Refreshing all online content");
+		pahub.api.log.addLogMessage("verb", "Refreshing all online content");
 		for (var i = 0; i < model.content.content_stores().length; i++) {
 			pahub.api.content.refreshOnlineContent(model.content.content_stores()[i].store_id);
 		}
@@ -463,7 +464,7 @@ setup_contenthub_content = function() {
 					saveas: store_id + ".catalog.json",
 					mode: "async",
 					success: function() {
-						pahub.api.log.addLogMessage("info", "Refreshing online content for store '" + store_id + "'");
+						pahub.api.log.addLogMessage("verb", "Refreshing online content for store '" + store_id + "'");
 						var catalogJSON = readJSONfromFile(path.join(constant.PAHUB_CACHE_DIR, store_id + ".catalog.json"));
 						if (catalogJSON != false) {
 							setTimeout(function() {
