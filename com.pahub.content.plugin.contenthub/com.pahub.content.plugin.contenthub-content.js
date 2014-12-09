@@ -139,7 +139,7 @@ setup_contenthub_content = function() {
 	
 	mc.removeContentItem = function(local, content_id) {
 		if (pahub.api.content.contentItemExists(local, content_id) == true) {
-			pahub.api.log.addLogMessage("info", "Removing '" + content_id + "'");
+			pahub.api.log.addLogMessage("verb", "Removing '" + content_id + "'");
 			var content = pahub.api.content.getContentItem(local, content_id);
 			if(model.isCorePlugin(content.content_id) == false) {
 				if (local == true) {

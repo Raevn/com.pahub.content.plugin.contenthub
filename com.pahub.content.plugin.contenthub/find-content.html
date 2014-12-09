@@ -1,4 +1,4 @@
-<div class="content-scroll-wrapper">
+<div class="content-scroll-wrapper" data-bind="style: {height: (model.content.selected_online_content().length > 0) ? 'calc(100% - 150px)' : '100%' }">
 	<div class='heading1'>CONTENT AVAILABLE FOR DOWNLOAD</div>
 	<div class='sub-tab-container'>
 		<div data-bind="css: {'selected-tab': model.content.online_content_filter_tab() == 'filter'}, click: function(){ model.content.online_content_filter_view(model.content.online_content_filter_tab() == 'filter' ? !model.content.online_content_filter_view() : true); model.content.online_content_filter_tab('filter'); }" class="tab">
@@ -111,5 +111,5 @@
 		</div>
 	<!-- /ko -->
 </div>
-<div id="content-detail-online" class="content-hover-detail">
+<div id="content-detail-online" class="content-hover-detail" data-bind="visible: model.content.selected_online_content().length > 0">
 </div>

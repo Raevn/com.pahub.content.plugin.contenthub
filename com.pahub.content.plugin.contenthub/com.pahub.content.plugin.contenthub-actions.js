@@ -34,6 +34,19 @@ setup_contenthub_actions = function() {
 		pahub.api.content.setContentItemsEnabled(itemIDsList, enabled);
 	}
 	
+	mc.uninstallSelectedContentItems = function(local) {
+		var selectedItems = pahub.api.content.getSelectedContent(local);
+		var itemIDsList = [];
+		
+		for (var i = 0; i < selectedItems.length; i++) {
+			if (pahub.api.content.contentItemExists(true, selectedItems[i].content_id) == true) {
+				itemIDsList.push(selectedItems[i].content_id);
+			}
+		}
+		
+		pahub.api.content.uninstallContentItems(itemIDsList);
+	}
+	
 	mc.installSelectedContentItems = function(local) {
 		var selectedItems = pahub.api.content.getSelectedContent(local);
 		var itemIDsList = [];
@@ -45,6 +58,32 @@ setup_contenthub_actions = function() {
 		pahub.api.content.installContentItems(itemIDsList);
 	}
 		
+	mc.uninstallContentItem = function(content_id) {
+		if (pahub.api.content.contentItemExists(true, content_id) == true) {
+			if (model.isCorePlugin(content_id) == false) {
+				var content = pahub.api.content.getContentItem(false, content_id);
+				pahub.api.log.addLogMessage("info", "Uninstalling content '" + content_id + "'");
+				pahub.api.content.disableContentItem(content.content_id);
+				if (content.store.data.hasOwnProperty("custom_uninstall_content_func") == true) {
+					if (typeof window[content.store.data.custom_uninstall_content_func] === 'function') {
+						window[content.store.data.custom_uninstall_content_func](content_id);
+					}	
+				} else {
+					pahub.api.content.removeContentItem(true, content_id);
+					deleteFolderRecursive(path.join(constant.PA_DATA_DIR, content.store.data.local_content_path, content_id));
+					//delete content icon?
+				}
+				if (pahub.api.content.contentItemExists(true, content_id) == true) {
+					pahub.api.log.addLogMessage("warn", "Failed to uninstall content '" + content_id + "'");
+				}
+			} else {
+				pahub.api.log.addLogMessage("error", "Failed to uninstall content '" + content_id + "': Content is a core plugin");
+			}
+		} else {
+			pahub.api.log.addLogMessage("error", "Failed to uninstall content '" + content_id + "': Content does not exist");
+		}
+	}
+	
 	mc.installContentItem = function(content_id) {
 		if (pahub.api.content.contentItemExists(false, content_id) == true) {
 			var content = pahub.api.content.getContentItem(false, content_id);
@@ -58,6 +97,7 @@ setup_contenthub_actions = function() {
 			}
 			if (dependenciesOk == true) {
 				var update = pahub.api.content.contentItemExists(false, content_id);
+				pahub.api.log.addLogMessage("info", "Installing content '" + content_id + "'");
 				if (content.data.hasOwnProperty("url") == true) {
 				
 					pahub.api.resource.loadResource(content.data.url, "save", {
@@ -210,6 +250,14 @@ setup_contenthub_actions = function() {
 			}
 		} else {
 			pahub.api.log.addLogMessage("warn", "Cannot disable content with id '" + content_id + "': Content item does not exist");
+		}
+	}
+	
+	mc.uninstallContentItems = function(content_ids) {
+		if ($.isArray(content_ids) == true) {
+			for (var i = 0; i < content_ids.length; i++) {
+				pahub.api.content.uninstallContentItem(content_ids[i]);
+			}
 		}
 	}
 

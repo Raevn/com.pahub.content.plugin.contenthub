@@ -90,14 +90,14 @@ function load_plugin_content(data, folder) {
 												"<!-- /ko -->" +
 											"<!-- /ko -->" +
 											"<!-- ko if: model.isCorePlugin(data.content_id) == false -->" +
-												"<div class='text-button-uninstall text-button' data-bind='click: function() {alert(\"Not Yet Implemented\")}'>Uninstall</div>" +
+												"<div class='text-button-uninstall text-button' data-bind='click: function() { pahub.api.content.uninstallContentItem(data.content_id); }'>Uninstall</div>" +
 											"<!-- /ko -->" +
 										"<!-- /ko -->" +
 										"<!-- ko if: model.content.selected_local_content().length > 1 -->" +
 											"<div class='text-button' data-bind='click: function() { model.content.setSelectedContentItemsEnabled(true); }'>Enable All</div>" +
 											"<div class='text-button' data-bind='click: function() { model.content.setSelectedContentItemsEnabled(false); }'>Disable All</div>" +
 											"<div class='text-button' data-bind='click: function() { model.content.installSelectedContentItems(true); }'>Reinstall All</div>" +
-											"<div class='text-button-uninstall text-button' data-bind='click: function() {alert(\"Not Yet Implemented\")}'>Uninstall All</div>" +
+											"<div class='text-button-uninstall text-button' data-bind='click: function() { model.content.uninstallSelectedContentItems(true); }'>Uninstall All</div>" +
 										"<!-- /ko -->" +
 									"</div>" +
 									"<div class='content-description' data-bind='text: data.description'></div>" +

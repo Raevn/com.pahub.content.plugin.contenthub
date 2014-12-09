@@ -88,11 +88,15 @@ setup_contenthub_sort = function() {
 	}
 	
 	var group_func_first_letter = function (content) {
-		if (content.display_name().length > 0) {
-			if (content.display_name().charAt(0).match(/[^a-z0-9]/i) == null) {
-				return content.display_name().charAt(0).toUpperCase();
+		if (content) {
+			if (content.display_name().length > 0) {
+				if (content.display_name().charAt(0).match(/[^a-z0-9]/i) == null) {
+					return content.display_name().charAt(0).toUpperCase();
+				} else {
+					return "(Symbol)"
+				}
 			} else {
-				return "(Symbol)"
+				return "";
 			}
 		} else {
 			return "";

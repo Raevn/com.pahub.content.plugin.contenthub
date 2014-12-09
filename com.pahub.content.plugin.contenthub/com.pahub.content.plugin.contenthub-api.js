@@ -26,10 +26,12 @@ pahub.api["content"] = {
 	
 	/* ACTIONS */
 	getContentItemEnabled: function(content_id) { return model.content.getContentItemEnabled( content_id); },
+	uninstallContentItem: function(content_id) { model.content.uninstallContentItem(content_id); },	
 	installContentItem: function(content_id) { model.content.installContentItem(content_id); },	
 	setContentItemEnabled: function(content_id, enabled) { return model.content.setContentItemEnabled(content_id, enabled); },
 	enableContentItem: function(content_id) { return model.content.enableContentItem(content_id); },
 	disableContentItem: function(content_id) { return model.content.disableContentItem(content_id); },
+	uninstallContentItems: function(content_ids) { model.content.uninstallContentItems(content_ids); },	
 	installContentItems: function(content_ids) { model.content.installContentItems(content_ids); },	
 	setContentItemsEnabled: function(content_ids, enabled) { return model.content.setContentItemsEnabled(content_ids, enabled); },
 	enableContentItems: function(content_ids) { return model.content.enableContentItems(content_ids); },
